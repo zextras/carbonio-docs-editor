@@ -1,0 +1,24 @@
+[Unit]
+Description=Carbonio Docs Server
+After=network.target
+
+[Service]
+Environment="LANG=C.UTF-8"
+ExecStart=/opt/zextras/docs/bin/coolwsd --version --o:sys_template_path=/opt/zextras/docs/generated/systemplate --o:child_root_path=/opt/zextras/docs/generated/child-roots --o:file_server_root_path=/opt/zextras/docs/share/coolwsd
+KillSignal=SIGINT
+TimeoutStopSec=120
+User=cool
+KillMode=control-group
+Restart=always
+LimitNOFILE=infinity:infinity
+
+ProtectSystem=strict
+ReadWritePaths=/opt/zextras/docs /var/log
+
+ProtectHome=yes
+PrivateTmp=yes
+ProtectControlGroups=yes
+CapabilityBoundingSet=CAP_FOWNER CAP_CHOWN CAP_MKNOD CAP_SYS_CHROOT CAP_SYS_ADMIN
+
+[Install]
+WantedBy=multi-user.target

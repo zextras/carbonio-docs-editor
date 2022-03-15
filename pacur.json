@@ -1,0 +1,11 @@
+{
+    "name": "Docs Server",
+    "Description": "This is the lool-server project",
+    "build_dir": "/tmp/",
+    "output": "artifacts",
+    "Projects": [
+        {
+            "name": "docs-server"
+        }
+    ]
+}

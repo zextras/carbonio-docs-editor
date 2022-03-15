@@ -1,0 +1,208 @@
+targets=(
+  "centos"
+  "ubuntu"
+)
+pkgname="carbonio-docs-server"
+pkgver="21.11.2"
+pkgrel="1"
+pkgdesc="A Web office suite for Carbonio"
+pkgdesclong=(
+  "A Web office suite for Carbonio"
+)
+maintainer="Zextras <packages@zextras.com>"
+url="https://zextras.com"
+section="mail"
+priority="optional"
+arch="amd64"
+backup=(
+  "/opt/zextras/docs/conf/coolwsd.xml"
+  "/opt/zextras/docs/conf/coolkitconfig.xcu"
+)
+depends:apt=(
+  "carbonio-docs-core"
+  "carbonio-openssl"
+  "carbonio-poco"
+  "fontconfig"
+  "fonts-roboto"
+  "libcap2-bin"
+  "libpng16-16"
+  "python3-lxml" 
+  "python3-polib"
+)
+makedepends:apt=(
+  "autoconf"
+  "automake"
+  "bison"
+  "carbonio-docs-core"
+  "carbonio-openssl"
+  "carbonio-poco"
+  "libcap-dev"
+  "libcap2-bin"
+  "libcppunit-dev" 
+  "libfontconfig1-dev"
+  "libpam0g-dev"
+  "libpng-dev"
+  "libtool"
+  "m4"
+  "make"
+  "pkg-config"
+  "python3"
+  "python3-lxml"
+  "python3-polib"
+)
+depends:yum=(
+  "carbonio-poco"
+  "carbonio-openssl"
+  "carbonio-docs-core"
+  "cpio"
+  "cpp"
+  "fontconfig"
+  "google-roboto-fonts"
+  "m4"
+  "nasm"
+  "nodejs"
+  "patch"
+  "python36-lxml"
+  "python36-polib"
+)
+makedepends:yum=(
+  "automake"
+  "bison"  
+  "carbonio-docs-core"
+  "carbonio-openssl"
+  "carbonio-poco"
+  "cppunit-devel"
+  "cups-devel"
+  "flex"
+  "fontconfig-devel"
+  "git"
+  "gperf"
+  "libcap-devel"
+  "libcap-ng-devel"
+  "libpng-devel"
+  "libtool"  
+  "pam-devel"
+  "pkgconfig"
+)
+sources=(
+  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-4.tar.gz"
+  "zextras-server.patch"
+  "docs-server.service"
+)
+hashsums=(
+  "03f836d059072518142d81ab8fdc72e2de1d93cd959bf595093599e71f8de847"
+  "3d90cd5ae715609384265e445d0cc20dc86e48a39397426d2b51419a16959faa"
+  "skip"
+)
+
+build() {
+  curl -sL https://deb.nodesource.com/setup_lts.x | bash - ;
+  apt-get -y install nodejs; 
+  cd "${srcdir}/online-cp-${pkgver}-4"
+
+  # Rebrand of static strings
+  sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
+    $(grep -iIr "Collabora Online Development Edition" . | cut -d":" -f1)
+
+  # Add zx spice
+  #patch -Np1 -i ../zextras-server.patch
+
+  # Disable unit-tests
+  sed -i "s/test cypress_test//" Makefile.am
+
+  # Force /opt/zextras/docs/conf path and inject some sane defaults
+  sed -Ei "s#COOLWSD_CONFIGDIR=.*#COOLWSD_CONFIGDIR=/opt/zextras/docs/conf#" configure.ac
+  sed -Ei "s#COOLWSD_LOGLEVEL=.*#COOLWSD_LOGLEVEL=information#" configure.ac
+  sed -Ei "s#COOLWSD_VERSION_HASH=.*#COOLWSD_VERSION_HASH=dist#" configure.ac
+  sed -Ei "s#COOLWSD_LOG_TO_FILE=.*#COOLWSD_LOG_TO_FILE=true#" configure.ac
+  sed -Ei "s#CLEANUP_COMMAND=.*#CLEANUP_COMMAND=true#" test/Makefile.am
+
+  # use Zextras and Collabora Copyright label in about dialog
+  sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2022, Zextras/g" \
+    browser/html/cool.html.m4
+
+  ./autogen.sh
+  ./configure --prefix=/opt/zextras/docs \
+    --build=x86_64-linux-gnu \
+    --host=x86_64-linux-gnu \
+    --with-app-name="Carbonio Docs" \
+    --with-app-branding=/tmp/theme/dist \
+    --with-lokit-path=/opt/zextras/common/include \
+    --with-poco-includes=/opt/zextras/common/include \
+    --with-poco-libs=/opt/zextras/common/lib \
+    --with-max-connections=10000 \
+    --with-max-documents=10000 \
+    --enable-ssl \
+    --disable-debug \
+    --disable-debug-protocol \
+    --disable-setcap \
+    --with-lo-path=/opt/zextras/docs/core \
+    --with-logfile=/opt/zextras/docs/log/docs-server.log \
+    --sysconfdir=/opt/zextras/docs/conf \
+    --localstatedir=/var
+
+  make build-nocheck -j"$(nproc)"
+}
+
+package() {
+  cd "${srcdir}/online-cp-${pkgver}-4"
+
+  make DESTDIR="${pkgdir}" install
+
+  install -dm755 "${pkgdir}"/var/log
+  install -dm755 "${pkgdir}"/var/cache/cool
+  install -dm750 "${pkgdir}"/var/lib/cool
+  install -Dm644 coolwsd.xml \
+    "${pkgdir}/opt/zextras/docs/conf/coolwsd.xml"
+
+  install -Dm644 "${srcdir}/docs-server.service" \
+    "${pkgdir}/lib/systemd/system/carbonio-docs-server.service"
+  
+  cp -r /tmp/theme/dist/* \
+    "${pkgdir}/opt/zextras/docs/share/coolwsd/browser/dist"
+  rm -rf "${pkgdir}/opt/zextras/docs/conf/apache2/"
+  rm -rf "${pkgdir}/opt/zextras/docs/conf/nginx/"
+}
+
+preinst:apt() {
+  if [ -d /run/systemd/system ]; then
+    deb-systemd-invoke stop carbonio-docs-server.service >/dev/null || true
+  fi
+}
+
+postinst:apt() {
+  case "$1" in
+  configure)
+    setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit
+    setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
+
+    id -u cool >/dev/null 2>&1 || adduser --quiet --system --group --home /opt/zextras/docs/ cool 2>/dev/null
+    mkdir -p /var/cache/coolwsd && chown cool: /var/cache/coolwsd
+    rm -rf /var/cache/coolwsd/*
+    chown cool: -R /opt/zextras/docs/conf/
+    chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu
+
+    if [ ! -d /opt/zextras/docs/log ]; then
+      mkdir -p /opt/zextras/docs/log/
+      chown cool:cool -R /opt/zextras/docs/log/
+	  fi
+    rm -rf /opt/zextras/docs/generated/
+    mkdir -p /opt/zextras/docs/generated/
+    mkdir -p /opt/zextras/docs/generated/child-roots
+    chown cool: -R /opt/zextras/docs/generated/
+
+    mkdir -p /opt/zextras/docs/core/share/fonts/custom
+    fc-cache /opt/zextras/docs/core/share/fonts/
+
+    su cool --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
+    su cool --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
+
+    if deb-systemd-helper --quiet was-enabled carbonio-docs-server.service; then
+      deb-systemd-helper enable carbonio-docs-server.service >/dev/null || true
+    else
+      deb-systemd-helper update-state carbonio-docs-server.service >/dev/null || true
+    fi
+    systemctl daemon-reload || true
+    ;;
+  esac
+}
