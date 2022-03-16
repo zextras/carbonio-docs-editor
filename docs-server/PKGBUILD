@@ -3,7 +3,7 @@ targets=(
   "ubuntu"
 )
 pkgname="carbonio-docs-server"
-pkgver="21.11.2"
+pkgver="21.11.3"
 pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 pkgdesclong=(
@@ -85,12 +85,12 @@ makedepends:yum=(
   "pkgconfig"
 )
 sources=(
-  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-4.tar.gz"
+  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-1.tar.gz"
   "zextras-server.patch"
   "docs-server.service"
 )
 hashsums=(
-  "03f836d059072518142d81ab8fdc72e2de1d93cd959bf595093599e71f8de847"
+  "a4f016a88ed9f98b35b0a3eb510988d3586196cf49941a117ec27651360c6a2c"
   "3d90cd5ae715609384265e445d0cc20dc86e48a39397426d2b51419a16959faa"
   "skip"
 )
@@ -98,7 +98,7 @@ hashsums=(
 build() {
   curl -sL https://deb.nodesource.com/setup_lts.x | bash - ;
   apt-get -y install nodejs; 
-  cd "${srcdir}/online-cp-${pkgver}-4"
+  cd "${srcdir}/online-cp-${pkgver}-1"
 
   # Rebrand of static strings
   sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
@@ -145,7 +145,7 @@ build() {
 }
 
 package() {
-  cd "${srcdir}/online-cp-${pkgver}-4"
+  cd "${srcdir}/online-cp-${pkgver}-1"
 
   make DESTDIR="${pkgdir}" install
 
