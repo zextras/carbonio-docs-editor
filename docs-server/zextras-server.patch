@@ -1,94 +1,7 @@
-diff --git a/browser/src/core/Socket.js b/browser/src/core/Socket.js
-index 233240cc5..b76d48a3e 100644
---- a/browser/src/core/Socket.js
-+++ b/browser/src/core/Socket.js
-@@ -866,13 +868,6 @@ app.definitions.Socket = L.Class.extend({
- 
- 				if (!that._map['wopi'].UserCanNotWriteRelative) {
- 					dialogButtons.push(
--						$.extend({}, vex.dialog.buttons.YES, {
--							text: _('Save to new file'),
--							className: 'vex-dialog-button-primary',
--							click: function() {
--								this.value = 'saveas';
--								this.close();
--							}}),
- 						$.extend({}, vex.dialog.buttons.YES, {
- 							text: _('Cancel'),
- 							className: 'vex-dialog-button-secondary vex-dialog-button-cancel',
-diff --git a/browser/src/main.js b/browser/src/main.js
-index b753e6135..83b7037fb 100644
---- a/browser/src/main.js
-+++ b/browser/src/main.js
-@@ -88,4 +88,63 @@ if (L.Browser.isInternetExplorer) {
- 	vex.dialog.alert(_('Warning! The browser you are using is not supported.'));
- }
- 
-+var title = getParameterByName('title');
-+
-+//set a cute favicon :)
-+var favicon = 'images/x-office-document.svg';
-+var indexOfDot = title.lastIndexOf('.');
-+if (indexOfDot !== -1) {
-+	var extension = title.substr(indexOfDot+1);
-+
-+	switch (extension) {
-+	case 'xls':
-+	case 'xlsx':
-+	case 'xlsm':
-+	case 'odc':
-+	case 'ods':
-+	case 'otc':
-+		favicon = 'images/x-office-spreadsheet.svg';
-+		break;
-+	case 'pps':
-+	case 'ppt':
-+	case 'pptx':
-+	case 'odp':
-+	case 'otp':
-+		favicon = 'images/x-office-presentation.svg';
-+		break;
-+	default:
-+	case 'doc':
-+	case 'docx':
-+	case 'odt':
-+	case 'ott':
-+		favicon = 'images/x-office-document.svg';
-+		break;
-+	}
-+}
-+
-+var link = document.createElement('link');
-+link.rel = 'icon';
-+//convert to absolute because we'll change the url in the next step
-+link.href = new URL(favicon, document.baseURI).href;
-+link.type = 'image/svg+xml';
-+document.head.appendChild(link);
-+
-+//fix the base url even if we change the displayed url
-+var base = document.createElement('base');
-+base.href = document.baseURI;
-+document.head.appendChild(base);
-+
-+window.originalPath = document.baseURI;
-+
-+var publicUrl = decodeURIComponent(getParameterByName('public_url'));
-+if (publicUrl === '') {
-+	//when the core is not updated and public_url is not present
-+	//break the browser link to avoid sharing user own token
-+	publicUrl = title;
-+}
-+
-+//replace browser url with the unauthenticated url
-+window.history.replaceState('', title, publicUrl);
-+document.title = title;
-+
- }(window));
-diff --git a/coolwsd-systemplate-setup b/coolwsd-systemplate-setup
-index 3434ea9b1..a16485f6a 100755
---- a/coolwsd-systemplate-setup
-+++ b/coolwsd-systemplate-setup
-@@ -118,6 +118,7 @@ cd $CHROOT || exit 1
+diff '--color=auto' -Naur a/coolwsd-systemplate-setup b/coolwsd-systemplate-setup
+--- a/coolwsd-systemplate-setup	2022-03-22 15:17:42.236444637 +0100
++++ b/coolwsd-systemplate-setup	2022-03-22 15:17:52.583455706 +0100
+@@ -118,6 +118,7 @@
  
  mkdir -p $LOCALBASE/share || exit 1
  ${CP} -r -p -L /${LOCALBASE}/share/fonts $LOCALBASE/share
@@ -96,10 +9,9 @@ index 3434ea9b1..a16485f6a 100755
  
  if [ -h $LOCALBASE/share/fonts/ghostscript ]; then
      mkdir $LOCALBASE/share/ghostscript || exit 1
-diff --git a/coolwsd.xml.in b/coolwsd.xml.in
-index 66f24e3f7..7951dcfd2 100644
---- a/coolwsd.xml.in
-+++ b/coolwsd.xml.in
+diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
+--- a/coolwsd.xml.in	2022-03-22 15:17:42.236444637 +0100
++++ b/coolwsd.xml.in	2022-03-22 15:17:52.584455707 +0100
 @@ -94,7 +94,7 @@
           not here.
      -->
@@ -126,146 +38,10 @@ index 66f24e3f7..7951dcfd2 100644
          <cipher_list desc="List of OpenSSL ciphers to accept" default="ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"></cipher_list>
          <hpkp desc="Enable HTTP Public key pinning" enable="false" report_only="false">
              <max_age desc="HPKP's max-age directive - time in seconds browser should remember the pins" enable="true">1000</max_age>
-@@ -161,6 +161,10 @@
-         </sts>
-     </ssl>
- 
-+    <carbonio desc="Carbonio settings">
-+        <key_file_path desc="Path to the key file" relative="false">/opt/zextras/docs/conf/key.pem</key_file_path>
-+    </carbonio>
-+
-     <security desc="Altering these defaults potentially opens you to significant risk">
-       <seccomp desc="Should we use the seccomp system call filtering." type="bool" default="true">true</seccomp>
-       <capabilities desc="Should we require capabilities to isolate processes into chroot jails" type="bool" default="true">true</capabilities>
-@@ -193,20 +197,14 @@
-     <storage desc="Backend storage">
-         <filesystem allow="false" />
-         <wopi desc="Allow/deny wopi storage." allow="true">
--            <host desc="Regex pattern of hostname to allow or deny." allow="true">localhost</host>
--            <host desc="Regex pattern of hostname to allow or deny." allow="true">10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}</host>
--            <host desc="Regex pattern of hostname to allow or deny." allow="true">172\.1[6789]\.[0-9]{1,3}\.[0-9]{1,3}</host>
--            <host desc="Regex pattern of hostname to allow or deny." allow="true">172\.2[0-9]\.[0-9]{1,3}\.[0-9]{1,3}</host>
--            <host desc="Regex pattern of hostname to allow or deny." allow="true">172\.3[01]\.[0-9]{1,3}\.[0-9]{1,3}</host>
--            <host desc="Regex pattern of hostname to allow or deny." allow="true">192\.168\.[0-9]{1,3}\.[0-9]{1,3}</host>
--            <host desc="Regex pattern of hostname to allow or deny." allow="false">192\.168\.1\.1</host>
-+            ${HOST_LIST}
-             <max_file_size desc="Maximum document size in bytes to load. 0 for unlimited." type="uint">0</max_file_size>
-             <locking desc="Locking settings">
-                 <refresh desc="How frequently we should re-acquire a lock with the storage server, in seconds (default 15 mins) or 0 for no refresh" type="int" default="900">900</refresh>
-             </locking>
-         </wopi>
-         <ssl desc="SSL settings">
--            <as_scheme type="bool" default="true" desc="When set we exclusively use the WOPI URI's scheme to enable SSL for storage">true</as_scheme>
-+            <as_scheme type="bool" default="true" desc="When set we exclusively use the WOPI URI's scheme to enable SSL for storage">false</as_scheme>
-             <enable type="bool" desc="If as_scheme is false or not set, this can be set to force SSL encryption between storage and coolwsd. When empty this defaults to following the ssl.enable setting"></enable>
-             <cert_file_path desc="Path to the cert file" relative="false"></cert_file_path>
-             <key_file_path desc="Path to the key file" relative="false"></key_file_path>
-diff --git a/discovery.xml b/discovery.xml
-index fcece131e..aa343e5f5 100644
---- a/discovery.xml
-+++ b/discovery.xml
-@@ -450,8 +450,8 @@
- 
-         <!-- End of legacy MIME-type actions -->
- 
--        <app name="Capabilities">
-+        <!--<app name="Capabilities">
-             <action name="getinfo" ext=""/>
--        </app>
-+        </app>-->
-     </net-zone>
- </wopi-discovery>
-diff --git a/kit/ChildSession.cpp b/kit/ChildSession.cpp
-index c9d67a3bd..1a4883199 100644
---- a/kit/ChildSession.cpp
-+++ b/kit/ChildSession.cpp
-@@ -1951,14 +1953,14 @@ bool ChildSession::resizeWindow(const char* /*buffer*/, int /*length*/, const St
-     return true;
- }
- 
--bool ChildSession::sendWindowCommand(const char* /*buffer*/, int /*length*/, const StringVector& tokens)
-+bool ChildSession::sendWindowCommand(const char* buf /*buffer*/, int /*length*/, const StringVector& tokens)
- {
-     const unsigned winId = (tokens.size() > 1 ? std::stoul(tokens[1]) : 0);
- 
-     getLOKitDocument()->setView(_viewId);
- 
-     if (tokens.size() > 2 && tokens.equals(2, "close"))
--        getLOKitDocument()->postWindow(winId, LOK_WINDOW_CLOSE, nullptr);
-+        getLOKitDocument()->postWindow(winId, LOK_WINDOW_CLOSE, buf);
-     else if (tokens.size() > 3 && tokens.equals(2, "paste"))
-         getLOKitDocument()->postWindow(winId, LOK_WINDOW_PASTE, tokens[3].c_str());
- 
-diff --git a/wsd/Admin.cpp b/wsd/Admin.cpp
-index 2c9c394b5..aabe9b520 100644
---- a/wsd/Admin.cpp
-+++ b/wsd/Admin.cpp
-@@ -74,9 +74,11 @@ void AdminSocketHandler::handleMessage(const std::vector<char> &payload)
-         }
-         std::string jwtToken;
-         COOLProtocol::getTokenString(tokens[1], "jwt", jwtToken);
-+        const auto& config = Application::instance().config();
-+        const std::string sslKeyPath = config.getString("carbonio.key_file_path", "");
- 
-         LOG_INF("Verifying JWT token: " << jwtToken);
--        JWTAuth authAgent("admin", "admin", "admin");
-+        JWTAuth authAgent(sslKeyPath, "admin", "admin", "admin");
-         if (authAgent.verify(jwtToken))
-         {
-             LOG_TRC("JWT token is valid");
-diff --git a/wsd/Auth.cpp b/wsd/Auth.cpp
-index dfcc0e837..09e0b653e 100644
---- a/wsd/Auth.cpp
-+++ b/wsd/Auth.cpp
-@@ -35,15 +35,6 @@ using Poco::Base64Decoder;
- using Poco::Base64Encoder;
- using Poco::OutputLineEndingConverter;
- 
--std::unique_ptr<Poco::Crypto::RSAKey> JWTAuth::_key(
--    new Poco::Crypto::RSAKey(Poco::Crypto::RSAKey(Poco::Crypto::RSAKey::KL_2048, Poco::Crypto::RSAKey::EXP_LARGE)));
--
--// avoid obscure double frees on exit.
--void JWTAuth::cleanup()
--{
--    _key.reset();
--}
--
- const std::string JWTAuth::getAccessToken()
- {
-     std::string encodedHeader = createHeader();
-diff --git a/wsd/Auth.hpp b/wsd/Auth.hpp
-index 3d71f4dd2..7bc15b358 100644
---- a/wsd/Auth.hpp
-+++ b/wsd/Auth.hpp
-@@ -36,11 +36,12 @@ public:
- class JWTAuth : public AuthBase
- {
- public:
--    JWTAuth(const std::string& name, const std::string& sub, const std::string& aud)
-+    JWTAuth(const std::string& keyPath, const std::string& name, const std::string& sub, const std::string& aud)
-         : _name(name),
-           _sub(sub),
-           _aud(aud),
--          _digestEngine(*_key, "SHA256")
-+          _key(Poco::Crypto::RSAKey("", keyPath)),
-+          _digestEngine(_key, "SHA256")
-     {
-     }
- 
-@@ -64,7 +65,7 @@ private:
-     const std::string _sub;
-     const std::string _aud;
- 
--    static std::unique_ptr<Poco::Crypto::RSAKey> _key;
-+    const Poco::Crypto::RSAKey _key;
-     Poco::Crypto::RSADigestEngine _digestEngine;
- };
- 
-diff --git a/wsd/COOLWSD.cpp b/wsd/COOLWSD.cpp
-index 91d7f1797..178d76d43 100644
---- a/wsd/COOLWSD.cpp
-+++ b/wsd/COOLWSD.cpp
-@@ -3694,7 +3694,7 @@ private:
+diff '--color=auto' -Naur a/wsd/COOLWSD.cpp b/wsd/COOLWSD.cpp
+--- a/wsd/COOLWSD.cpp	2022-03-22 15:17:42.253444655 +0100
++++ b/wsd/COOLWSD.cpp	2022-03-22 15:17:52.586455709 +0100
+@@ -4054,7 +4054,7 @@
                              COOLWSD::checkDiskSpaceAndWarnClients(true);
                              // Users of development versions get just an info
                              // when reaching max documents or connections
@@ -274,43 +50,3 @@ index 91d7f1797..178d76d43 100644
  
                              sendLoadResult(clientSession, true, "");
                          }
-@@ -4540,7 +4540,7 @@ void COOLWSD::cleanup()
-         SavedClipboards.reset();
- 
-         FileServerRequestHandler::uninitialize();
--        JWTAuth::cleanup();
-+        // JWTAuth::cleanup();
- 
- #if ENABLE_SSL
-         // Finally, we no longer need SSL.
-diff --git a/wsd/FileServer.cpp b/wsd/FileServer.cpp
-index 018e46630..e063b2062 100644
---- a/wsd/FileServer.cpp
-+++ b/wsd/FileServer.cpp
-@@ -205,6 +205,7 @@ bool FileServerRequestHandler::isAdminLoggedIn(const HTTPRequest& request,
-     assert(COOLWSD::AdminEnabled);
- 
-     const auto& config = Application::instance().config();
-+    const std::string& sslKeyPath = config.getString("carbonio.key_file_path", "");
- 
-     NameValueCollection cookies;
-     request.getCookies(cookies);
-@@ -212,7 +213,7 @@ bool FileServerRequestHandler::isAdminLoggedIn(const HTTPRequest& request,
-     {
-         const std::string jwtToken = cookies.get("jwt");
-         LOG_INF("Verifying JWT token: " << jwtToken);
--        JWTAuth authAgent("admin", "admin", "admin");
-+        JWTAuth authAgent(sslKeyPath, "admin", "admin", "admin");
-         if (authAgent.verify(jwtToken))
-         {
-             LOG_TRC("JWT token is valid");
-@@ -255,7 +256,7 @@ bool FileServerRequestHandler::isAdminLoggedIn(const HTTPRequest& request,
-     }
- 
-     // authentication passed, generate and set the cookie
--    JWTAuth authAgent("admin", "admin", "admin");
-+    JWTAuth authAgent(sslKeyPath, "admin", "admin", "admin");
-     const std::string jwtToken = authAgent.getAccessToken();
- 
-     Poco::Net::HTTPCookie cookie("jwt", jwtToken);
-

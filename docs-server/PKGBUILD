@@ -85,27 +85,32 @@ makedepends:yum=(
   "pkgconfig"
 )
 sources=(
-  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-1.tar.gz"
+  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
   "zextras-server.patch"
   "docs-server.service"
 )
 hashsums=(
   "a4f016a88ed9f98b35b0a3eb510988d3586196cf49941a117ec27651360c6a2c"
-  "3d90cd5ae715609384265e445d0cc20dc86e48a39397426d2b51419a16959faa"
+  "c0c63ec5b129e11200e090e03120848f6965e773f9dd83d1bfd93100631e1b61"
   "skip"
 )
 
 build() {
   curl -sL https://deb.nodesource.com/setup_lts.x | bash - ;
   apt-get -y install nodejs; 
-  cd "${srcdir}/online-cp-${pkgver}-1"
+  cd "${srcdir}/online-cp-${pkgver}-2"
 
   # Rebrand of static strings
   sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
     $(grep -iIr "Collabora Online Development Edition" . | cut -d":" -f1)
 
+  # Bind address can't be changed at runtime, at least not for now
+  # Let's replace it
+  sed -i 's/127.0.0.1/127.78.0.11/g' \
+    $(grep -iIr "127.0.0.1" . | cut -d":" -f1)
+
   # Add zx spice
-  #patch -Np1 -i ../zextras-server.patch
+  patch -Np1 -i ../zextras-server.patch
 
   # Disable unit-tests
   sed -i "s/test cypress_test//" Makefile.am
@@ -145,7 +150,7 @@ build() {
 }
 
 package() {
-  cd "${srcdir}/online-cp-${pkgver}-1"
+  cd "${srcdir}/online-cp-${pkgver}-2"
 
   make DESTDIR="${pkgdir}" install
 
