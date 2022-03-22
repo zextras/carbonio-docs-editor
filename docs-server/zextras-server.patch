@@ -11,7 +11,7 @@ diff '--color=auto' -Naur a/coolwsd-systemplate-setup b/coolwsd-systemplate-setu
      mkdir $LOCALBASE/share/ghostscript || exit 1
 diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
 --- a/coolwsd.xml.in	2022-03-22 15:17:42.236444637 +0100
-+++ b/coolwsd.xml.in	2022-03-22 15:17:52.584455707 +0100
++++ b/coolwsd.xml.in	2022-03-22 15:33:30.555380952 +0100
 @@ -94,7 +94,7 @@
           not here.
      -->
