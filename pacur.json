@@ -1,11 +1,11 @@
 {
-    "name": "Docs Server",
-    "Description": "This is the lool-server project",
+    "name": "Carbonio Docs Editor",
+    "Description": "This is the Carbonio Docs Editor project",
     "build_dir": "/tmp/",
     "output": "artifacts",
     "Projects": [
         {
-            "name": "docs-server"
+            "name": "package"
         }
     ]
 }

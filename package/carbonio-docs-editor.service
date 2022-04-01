@@ -7,7 +7,7 @@ Environment="LANG=C.UTF-8"
 ExecStart=/opt/zextras/docs/bin/coolwsd --version --o:sys_template_path=/opt/zextras/docs/generated/systemplate --o:child_root_path=/opt/zextras/docs/generated/child-roots --o:file_server_root_path=/opt/zextras/docs/share/coolwsd --port=10000
 KillSignal=SIGINT
 TimeoutStopSec=120
-User=cool
+User=carbonio-docs-editor
 KillMode=control-group
 Restart=always
 LimitNOFILE=infinity:infinity

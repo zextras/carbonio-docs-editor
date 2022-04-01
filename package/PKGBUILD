@@ -2,7 +2,7 @@ targets=(
   "centos"
   "ubuntu"
 )
-pkgname="carbonio-docs-server"
+pkgname="carbonio-docs-editor"
 pkgver="21.11.3"
 pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
@@ -87,11 +87,25 @@ makedepends:yum=(
 sources=(
   "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
   "zextras-server.patch"
-  "docs-server.service"
+  "${pkgname}"
+  "${pkgname}.hcl"
+  "${pkgname}.service"
+  "${pkgname}-sidecar.service"
+  "${pkgname}-setup.sh"
+  "intentions.json"
+  "policies.json"
+  "service-protocol.json"
 )
 hashsums=(
   "a4f016a88ed9f98b35b0a3eb510988d3586196cf49941a117ec27651360c6a2c"
   "9bf98b5da8678a8be5e53acf7629886a7ee5777536475618132430e2e8eb6062"
+  "skip"
+  "skip"
+  "skip"
+  "skip"
+  "skip"
+  "skip"
+  "skip"
   "skip"
 )
 
@@ -103,11 +117,6 @@ build() {
   # Rebrand of static strings
   sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
     $(grep -iIr "Collabora Online Development Edition" . | cut -d":" -f1)
-
-  # Bind address can't be changed at runtime, at least not for now
-  # Let's replace it
-  # sed -i 's/127.0.0.1/127.78.0.11/g' \
-  #   $(grep -iIr "127.0.0.1" . | cut -d":" -f1)
 
   # Add zx spice
   patch -Np1 -i ../zextras-server.patch
@@ -129,22 +138,23 @@ build() {
   ./autogen.sh
   ./configure --prefix=/opt/zextras/docs \
     --build=x86_64-linux-gnu \
-    --host=x86_64-linux-gnu \
-    --with-app-name="Carbonio Docs" \
-    --with-app-branding=/tmp/theme/dist \
-    --with-lokit-path=/opt/zextras/common/include \
-    --with-poco-includes=/opt/zextras/common/include \
-    --with-poco-libs=/opt/zextras/common/lib \
-    --with-max-connections=10000 \
-    --with-max-documents=10000 \
-    --enable-ssl \
     --disable-debug \
     --disable-debug-protocol \
     --disable-setcap \
-    --with-lo-path=/opt/zextras/docs/core \
-    --with-logfile=/opt/zextras/docs/log/docs-server.log \
+    --enable-ssl \
+    --host=x86_64-linux-gnu \
+    --localstatedir=/var \
     --sysconfdir=/opt/zextras/docs/conf \
-    --localstatedir=/var
+    --with-app-branding=/tmp/theme/dist \
+    --with-app-name="Carbonio Docs Editor" \
+    --with-lo-path=/opt/zextras/docs/core \
+    --with-logfile=/opt/zextras/docs/log/docs-editor.log \
+    --with-lokit-path=/opt/zextras/common/include \
+    --with-max-connections=10000 \
+    --with-max-documents=10000 \
+    --with-poco-includes=/opt/zextras/common/include \
+    --with-poco-libs=/opt/zextras/common/lib \
+    --with-user-id="${pkgname}"
 
   make build-nocheck -j"$(nproc)"
 }
@@ -155,14 +165,35 @@ package() {
   make DESTDIR="${pkgdir}" install
 
   install -dm755 "${pkgdir}"/var/log
-  install -dm755 "${pkgdir}"/var/cache/cool
-  install -dm750 "${pkgdir}"/var/lib/cool
+  install -dm755 "${pkgdir}"/var/cache/${pkgname}
+  install -dm750 "${pkgdir}"/var/lib/${pkgname}
   install -Dm644 coolwsd.xml \
     "${pkgdir}/opt/zextras/docs/conf/coolwsd.xml"
 
-  install -Dm644 "${srcdir}/docs-server.service" \
-    "${pkgdir}/lib/systemd/system/carbonio-docs-server.service"
-  
+  install -Dm755 "${srcdir}/${pkgname}" \
+    "${pkgdir}/usr/bin/${pkgname}"
+
+  install -Dm644 "${srcdir}/${pkgname}.service" \
+    "${pkgdir}/lib/systemd/system/${pkgname}.service"
+
+  install -Dm644 "${srcdir}/${pkgname}-sidecar.service" \
+    "${pkgdir}/lib/systemd/system/${pkgname}-sidecar.service"
+
+  install -Dm755 "${srcdir}/${pkgname}.hcl" \
+    "${pkgdir}/etc/zextras/service-discover/${pkgname}.hcl"
+
+  install -Dm 644 "${srcdir}/${pkgname}-setup.sh" \
+    "${pkgdir}/etc/zextras/pending-setups.d/${pkgname}.sh"
+
+  install -Dm 644 "${srcdir}/intentions.json" \
+    "${pkgdir}/etc/carbonio/docs/service-discover/intentions.json"
+
+  install -Dm 644 "${srcdir}/policies.json" \
+    "${pkgdir}/etc/carbonio/docs/service-discover/policies.json"
+
+  install -Dm 644 "${srcdir}/service-protocol.json" \
+    "${pkgdir}/etc/carbonio/docs/service-discover/service-protocol.json"
+
   cp -r /tmp/theme/dist/* \
     "${pkgdir}/opt/zextras/docs/share/coolwsd/browser/dist"
   rm -rf "${pkgdir}/opt/zextras/docs/conf/apache2/"
@@ -171,7 +202,8 @@ package() {
 
 preinst:apt() {
   if [ -d /run/systemd/system ]; then
-    deb-systemd-invoke stop carbonio-docs-server.service >/dev/null || true
+    deb-systemd-invoke stop "${pkgname}.service" >/dev/null || true
+    deb-systemd-invoke stop "${pkgname}-sidecar.service" >/dev/null || true
   fi
 }
 
@@ -181,33 +213,46 @@ postinst:apt() {
     setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit
     setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
 
-    id -u cool >/dev/null 2>&1 || adduser --quiet --system --group --home /opt/zextras/docs/ cool 2>/dev/null
-    mkdir -p /var/cache/coolwsd && chown cool: /var/cache/coolwsd
+    id -u ${pkgname} >/dev/null 2>&1 || adduser --quiet --system --group --home /opt/zextras/docs/ ${pkgname} 2>/dev/null
+    mkdir -p /var/cache/carbonio-docs-server \
+      && chown ${pkgname}: /var/cache/${pkgname}
     rm -rf /var/cache/coolwsd/*
-    chown cool: -R /opt/zextras/docs/conf/
+    chown ${pkgname}: -R /opt/zextras/docs/conf/
     chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu
 
     if [ ! -d /opt/zextras/docs/log ]; then
       mkdir -p /opt/zextras/docs/log/
-      chown cool:cool -R /opt/zextras/docs/log/
+      chown ${pkgname}:${pkgname} -R /opt/zextras/docs/log/
 	  fi
     rm -rf /opt/zextras/docs/generated/
     mkdir -p /opt/zextras/docs/generated/
     mkdir -p /opt/zextras/docs/generated/child-roots
-    chown cool: -R /opt/zextras/docs/generated/
+    chown ${pkgname}: -R /opt/zextras/docs/generated/
 
     mkdir -p /opt/zextras/docs/core/share/fonts/custom
     fc-cache /opt/zextras/docs/core/share/fonts/
 
-    su cool --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
-    su cool --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
+    su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
+    su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
 
-    if deb-systemd-helper --quiet was-enabled carbonio-docs-server.service; then
-      deb-systemd-helper enable carbonio-docs-server.service >/dev/null || true
+    if deb-systemd-helper --quiet was-enabled "${pkgname}.service"; then
+      deb-systemd-helper enable "${pkgname}.service" >/dev/null || true
     else
-      deb-systemd-helper update-state carbonio-docs-server.service >/dev/null || true
+      deb-systemd-helper update-state "${pkgname}.service" >/dev/null || true
     fi
+
+    if deb-systemd-helper --quiet was-enabled "${pkgname}-sidecar.service"; then
+      deb-systemd-helper enable "${pkgname}-sidecar.service" >/dev/null || true
+    else
+      deb-systemd-helper update-state "${pkgname}-sidecar.service" >/dev/null || true
+    fi
+
     systemctl daemon-reload || true
+
+    echo "======================================================"
+    echo "Carbonio Docs Editor installed successfully!"
+    echo "You must run pending-setups to configure it correctly."
+    echo "======================================================"
     ;;
   esac
 }
