@@ -1,4 +1,9 @@
 services {
+  check {
+    tcp      = "localhost:10000"
+    timeout  = "1s"
+    interval = "5s"
+  }
   connect {
     sidecar_service {
       proxy {
@@ -14,5 +19,5 @@ services {
     }
   }
   name = "carbonio-docs-editor"
-  port = 9980
+  port = 10000
 }

@@ -4,7 +4,7 @@ targets=(
 )
 pkgname="carbonio-docs-editor"
 pkgver="21.11.3"
-pkgrel="1"
+pkgrel="2"
 pkgdesc="A Web office suite for Carbonio"
 pkgdesclong=(
   "A Web office suite for Carbonio"
@@ -28,6 +28,8 @@ depends:apt=(
   "libpng16-16"
   "python3-lxml" 
   "python3-polib"
+  "service-discover"
+  "pending-setups"
 )
 makedepends:apt=(
   "autoconf"
@@ -64,6 +66,8 @@ depends:yum=(
   "patch"
   "python36-lxml"
   "python36-polib"
+  "service-discover"
+  "pending-setups"
 )
 makedepends:yum=(
   "automake"
@@ -186,13 +190,13 @@ package() {
     "${pkgdir}/etc/zextras/pending-setups.d/${pkgname}.sh"
 
   install -Dm 644 "${srcdir}/intentions.json" \
-    "${pkgdir}/etc/carbonio/docs/service-discover/intentions.json"
+    "${pkgdir}/etc/carbonio/docs-editor/service-discover/intentions.json"
 
   install -Dm 644 "${srcdir}/policies.json" \
-    "${pkgdir}/etc/carbonio/docs/service-discover/policies.json"
+    "${pkgdir}/etc/carbonio/docs-editor/service-discover/policies.json"
 
   install -Dm 644 "${srcdir}/service-protocol.json" \
-    "${pkgdir}/etc/carbonio/docs/service-discover/service-protocol.json"
+    "${pkgdir}/etc/carbonio/docs-editor/service-discover/service-protocol.json"
 
   cp -r /tmp/theme/dist/* \
     "${pkgdir}/opt/zextras/docs/share/coolwsd/browser/dist"
@@ -222,8 +226,10 @@ postinst:apt() {
 
     if [ ! -d /opt/zextras/docs/log ]; then
       mkdir -p /opt/zextras/docs/log/
-      chown ${pkgname}:${pkgname} -R /opt/zextras/docs/log/
 	  fi
+
+    chown ${pkgname}: -R /opt/zextras/docs/log/
+
     rm -rf /opt/zextras/docs/generated/
     mkdir -p /opt/zextras/docs/generated/
     mkdir -p /opt/zextras/docs/generated/child-roots

@@ -1,6 +1,6 @@
 diff '--color=auto' -Naur a/coolwsd-systemplate-setup b/coolwsd-systemplate-setup
---- a/coolwsd-systemplate-setup	2022-03-22 15:17:42.236444637 +0100
-+++ b/coolwsd-systemplate-setup	2022-03-22 15:17:52.583455706 +0100
+--- a/coolwsd-systemplate-setup	2022-04-01 16:41:51.359841321 +0200
++++ b/coolwsd-systemplate-setup	2022-04-01 16:42:50.752471857 +0200
 @@ -118,6 +118,7 @@
  
  mkdir -p $LOCALBASE/share || exit 1
@@ -10,28 +10,49 @@ diff '--color=auto' -Naur a/coolwsd-systemplate-setup b/coolwsd-systemplate-setu
  if [ -h $LOCALBASE/share/fonts/ghostscript ]; then
      mkdir $LOCALBASE/share/ghostscript || exit 1
 diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
---- a/coolwsd.xml.in	2022-03-22 15:17:42.236444637 +0100
-+++ b/coolwsd.xml.in	2022-03-22 15:33:30.555380952 +0100
+--- a/coolwsd.xml.in	2022-04-01 16:41:51.359841321 +0200
++++ b/coolwsd.xml.in	2022-04-01 17:14:39.729165830 +0200
 @@ -94,7 +94,7 @@
           not here.
      -->
      <trace_event desc="The possibility to turn on generation of a Chrome Trace Event file" enable="false">
 -        <path desc="Output path for the Trace Event file, to which they will be written if turned on at run-time" type="string" default="@COOLWSD_TRACEEVENTFILE@">@COOLWSD_TRACEEVENTFILE@</path>
-+        <path desc="Output path to hold trace file and docs. Use '%' for timestamp to avoid overwriting. For example: /some/path/to/looltrace-%.gz" compress="true" snapshot="false">/tmp/looltrace-%.gz</path>
++        <path desc="Output path for the Trace Event file, to which they will be written if turned on at run-time" type="string" default="/var/log/coolwsd.trace.json">/var/log/coolwsd.trace.json</path>
      </trace_event>
  
      <browser_logging desc="Logging in the browser console" default="@BROWSER_LOGGING@">@BROWSER_LOGGING@</browser_logging>
-@@ -141,12 +141,12 @@
+@@ -112,15 +112,16 @@
+     <net desc="Network settings">
+       <!-- On systems where localhost resolves to IPv6 [::1] address first, when net.proto is all and net.listen is loopback, coolwsd unexpectedly listens on [::1] only.
+            You need to change net.proto to IPv4, if you want to use 127.0.0.1. -->
+-      <proto type="string" default="all" desc="Protocol to use IPv4, IPv6 or all for both">all</proto>
+-      <listen type="string" default="any" desc="Listen address that coolwsd binds to. Can be 'any' or 'loopback'.">any</listen>
++      <proto type="string" default="all" desc="Protocol to use IPv4, IPv6 or all for both">IPv4</proto>
++      <listen type="string" default="any" desc="Listen address that coolwsd binds to. Can be 'any' or 'loopback'.">loopback</listen>
+       <!-- this allows you to shift all of our URLs into a sub-path from
+            https://my.com/browser/a123... to https://my.com/my/sub/path/browser/a123... -->
+-      <service_root type="path" default="" desc="Prefix all the pages, websockets, etc. with this path."></service_root>
++      <service_root type="path" default="" desc="Prefix all the pages, websockets, etc. with this path.">/services/docs/editor/</service_root> 
+       <post_allow desc="Allow/deny client IP address for POST(REST)." allow="true">
+         <host desc="The IPv4 private 192.168 block as plain IPv4 dotted decimal addresses.">192\.168\.[0-9]{1,3}\.[0-9]{1,3}</host>
+         <host desc="Ditto, but as IPv4-mapped IPv6 addresses">::ffff:192\.168\.[0-9]{1,3}\.[0-9]{1,3}</host>
+         <host desc="The IPv4 loopback (localhost) address.">127\.0\.0\.1</host>
++        <host desc="The IPv4 loopback (localhost) address.">127\.78\.0\.12</host>
+         <host desc="Ditto, but as IPv4-mapped IPv6 address">::ffff:127\.0\.0\.1</host>
+         <host desc="The IPv6 loopback (localhost) address.">::1</host>
+         <host desc="The IPv4 private 172.16.0.0/12 subnet part 1.">172\.1[6789]\.[0-9]{1,3}\.[0-9]{1,3}</host>
+@@ -141,12 +142,12 @@
  
      <ssl desc="SSL settings">
          <!-- switches from https:// + wss:// to http:// + ws:// -->
 -        <enable type="bool" desc="Controls whether SSL encryption between coolwsd and the network is enabled (do not disable for production deployment). If default is false, must first be compiled with SSL support to enable." default="@ENABLE_SSL@">@ENABLE_SSL@</enable>
 +        <enable type="bool" desc="Controls whether SSL encryption between browser and coolwsd is enabled (do not disable for production deployment). If default is false, must first be compiled with SSL support to enable." default="true">false</enable>
          <!-- SSL off-load can be done in a proxy, if so disable SSL, and enable termination below in production -->
-         <termination desc="Connection via proxy where coolwsd acts as working via https, but actually uses http." type="bool" default="true">false</termination>
+-        <termination desc="Connection via proxy where coolwsd acts as working via https, but actually uses http." type="bool" default="true">false</termination>
 -        <cert_file_path desc="Path to the cert file" relative="false">/etc/coolwsd/cert.pem</cert_file_path>
 -        <key_file_path desc="Path to the key file" relative="false">/etc/coolwsd/key.pem</key_file_path>
 -        <ca_file_path desc="Path to the ca file" relative="false">/etc/coolwsd/ca-chain.cert.pem</ca_file_path>
++        <termination desc="Connection via proxy where coolwsd acts as working via https, but actually uses http." type="bool" default="true">true</termination>
 +        <cert_file_path desc="Path to the cert file" relative="false"></cert_file_path>
 +        <key_file_path desc="Path to the key file" relative="false"></key_file_path>
 +        <ca_file_path desc="Path to the ca file" relative="false"></ca_file_path>
@@ -39,8 +60,8 @@ diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
          <hpkp desc="Enable HTTP Public key pinning" enable="false" report_only="false">
              <max_age desc="HPKP's max-age directive - time in seconds browser should remember the pins" enable="true">1000</max_age>
 diff '--color=auto' -Naur a/wsd/COOLWSD.cpp b/wsd/COOLWSD.cpp
---- a/wsd/COOLWSD.cpp	2022-03-22 15:17:42.253444655 +0100
-+++ b/wsd/COOLWSD.cpp	2022-03-22 15:17:52.586455709 +0100
+--- a/wsd/COOLWSD.cpp	2022-04-01 16:41:51.801838530 +0200
++++ b/wsd/COOLWSD.cpp	2022-04-01 16:42:50.759471814 +0200
 @@ -4054,7 +4054,7 @@
                              COOLWSD::checkDiskSpaceAndWarnClients(true);
                              // Users of development versions get just an info
