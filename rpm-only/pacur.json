@@ -1,0 +1,12 @@
+{
+    "name": "python-polib",
+    "Description": "This is required only at build stage and for RHEL8",
+    "build_dir": "/tmp/",
+    "output": "artifacts",
+    "Projects": [
+        {
+            "name": "polib",
+            "install": true
+        }
+    ]
+}

@@ -39,40 +39,67 @@ pipeline {
                 stash includes: '**', name: 'project'
             }
         }
-        stage('Packaging') {
-            parallel {
-                stage('Ubuntu 20') {
-                    agent {
-                        node {
-                            label 'pacur-agent-ubuntu-20.04-v1'
-                        }
-                    }
-                    steps {
-                        unstash 'project'
-                        withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted', 
-                            passwordVariable: 'SECRET',
-                            usernameVariable: 'USERNAME')]) {
-                                sh 'echo "machine zextras.jfrog.io" >> auth.conf'
-                                sh 'echo "login $USERNAME" >> auth.conf'
-                                sh 'echo "password $SECRET" >> auth.conf'
-                                sh 'sudo mv auth.conf /etc/apt'
-                        }
+        stage('Ubuntu 20') {
+            agent {
+                node {
+                    label 'pacur-agent-ubuntu-20.04-v1'
+                }
+            }
+            steps {
+                unstash 'project'
+                withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted', 
+                    passwordVariable: 'SECRET',
+                    usernameVariable: 'USERNAME')]) {
+                        sh 'echo "machine zextras.jfrog.io" >> auth.conf'
+                        sh 'echo "login $USERNAME" >> auth.conf'
+                        sh 'echo "password $SECRET" >> auth.conf'
+                        sh 'sudo mv auth.conf /etc/apt'
+                }
                         sh '''
 sudo echo "deb https://zextras.jfrog.io/artifactory/ubuntu-playground focal main" > zextras.list
 sudo mv zextras.list /etc/apt/sources.list.d/
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243E584A21
 '''
-                        sh 'sudo mv theme /tmp'
-                        sh 'sudo pacur build ubuntu-focal .'
-                        stash includes: 'artifacts/',
-                        name: 'artifacts-ubuntu-focal'
-                    }
-                    post {
-                        always {
-                            archiveArtifacts artifacts: 'artifacts/*.deb',
-                            fingerprint: true
-                        }
-                    }
+                sh 'sudo mv theme /tmp'
+                sh 'sudo pacur build ubuntu-focal .'
+                stash includes: 'artifacts/',
+                name: 'artifacts-ubuntu-focal'
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'artifacts/*.deb',
+                    fingerprint: true
+                }
+            }
+        }
+        stage('Rocky 8') {
+            agent {
+                node {
+                    label 'pacur-agent-rocky-8-v1'
+                }
+            }
+            steps {
+                unstash 'project'
+                withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted', 
+                    passwordVariable: 'SECRET',
+                    usernameVariable: 'USERNAME')]) {
+                        sh 'echo "[Zextras]" > zextras.repo'
+                        sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-rc/" >> zextras.repo'
+                        sh 'echo "enabled=1" >> zextras.repo'
+                        sh 'echo "gpgcheck=0" >> zextras.repo'
+                        sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-rc/repomd.xml.key" >> zextras.repo'
+                        sh 'sudo mv zextras.repo /etc/yum.repos.d/zextras.repo'
+                }
+                sh 'sudo mv theme /tmp'
+                sh 'sudo pacur build rocky-8 rpm-only'
+                sh 'sudo pacur build rocky-8 .'
+                stash includes: 'artifacts/',
+                name: 'artifacts-rocky-8'
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'artifacts/*.deb',
+                    fingerprint: true
                 }
             }
         }
@@ -83,8 +110,9 @@ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243
                 }
             }
             steps {
-                // unstash 'artifacts-ubuntu-bionic'
                 unstash 'artifacts-ubuntu-focal'
+                unstash 'artifacts-rocky-8'
+
                 script {
                     def server = Artifactory.server 'zextras-artifactory'
                     def buildInfo
@@ -101,6 +129,11 @@ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243
                                 "pattern": "artifacts/*focal*.deb",
                                 "target": "ubuntu-playground/pool/",
                                 "props": "deb.distribution=focal;deb.component=main;deb.architecture=amd64"
+                            },
+                            {
+                                "pattern": "artifacts/(carbonio-docs-editor)-(*).rpm",
+                                "target": "centos8-playground/zextras/{1}/{1}-{2}.rpm",
+                                "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras"
                             }
                         ]
                     }'''
@@ -113,18 +146,19 @@ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243
                 buildingTag()
             }
             steps {
-                // unstash 'artifacts-ubuntu-bionic'
                 unstash 'artifacts-ubuntu-focal'
+                unstash 'artifacts-rocky-8'
+
                 script {
                     def server = Artifactory.server 'zextras-artifactory'
                     def buildInfo
                     def uploadSpec
                     def config
 
-                    //ubuntu
+                    // ubuntu
                     buildInfo = Artifactory.newBuildInfo()
-                    buildInfo.name += '-ubuntu'
-                    uploadSpec = '''{
+                    buildInfo.name += "-ubuntu"
+                    uploadSpec = """{
                         "files": [
                             {
                                 "pattern": "artifacts/*bionic*.deb",
@@ -137,7 +171,7 @@ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243
                                 "props": "deb.distribution=focal;deb.component=main;deb.architecture=amd64"
                             }
                         ]
-                    }'''
+                    }"""
                     server.upload spec: uploadSpec, buildInfo: buildInfo, failNoOp: false
                     config = [
                             'buildName'          : buildInfo.name,
@@ -150,9 +184,34 @@ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243
                             'copy'               : true,
                             'failFast'           : true
                     ]
-                    Artifactory.addInteractivePromotion server: server,
-                    promotionConfig: config,
-                    displayName: 'Ubuntu Promotion to Release'
+                    Artifactory.addInteractivePromotion server: server, promotionConfig: config, displayName: "Ubuntu Promotion to Release"
+                    server.publishBuildInfo buildInfo
+
+                    // rocky8
+                    buildInfo = Artifactory.newBuildInfo()
+                    buildInfo.name += "-centos8"
+                    uploadSpec= """{
+                        "files": [
+                            {
+                                "pattern": "artifacts/(carbonio-docs-editor)-(*).rpm",
+                                "target": "centos8-rc/zextras/{1}/{1}-{2}.rpm",
+                                "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras"
+                            }
+                        ]
+                    }"""
+                    server.upload spec: uploadSpec, buildInfo: buildInfo, failNoOp: false
+                    config = [
+                            'buildName'          : buildInfo.name,
+                            'buildNumber'        : buildInfo.number,
+                            'sourceRepo'         : 'centos8-rc',
+                            'targetRepo'         : 'centos8-release',
+                            'comment'            : 'Do not change anything! Just press the button',
+                            'status'             : 'Released',
+                            'includeDependencies': false,
+                            'copy'               : true,
+                            'failFast'           : true
+                    ]
+                    Artifactory.addInteractivePromotion server: server, promotionConfig: config, displayName: "Centos8 Promotion to Release"
                     server.publishBuildInfo buildInfo
                 }
             }

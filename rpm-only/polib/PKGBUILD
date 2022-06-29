@@ -1,0 +1,40 @@
+targets=(
+  "centos"
+  "ubuntu"
+)
+pkgname="python3-polib"
+pkgver="1.1.1"
+pkgrel="1"
+pkgdesc="A library to manipulate gettext files"
+pkgdesclong=(
+  "A library to manipulate gettext files"
+)
+maintainer="Zextras <packages@zextras.com>"
+url="https://zextras.com"
+section="mail"
+priority="optional"
+arch="amd64"
+depends:yum=(
+  "python3"
+)
+makedepends:yum=(
+  "python3"
+  "python3-setuptools"
+)
+sources=("https://pypi.io/packages/source/p/polib/polib-${pkgver}.tar.gz")
+hashsums=(
+  "e02c355ae5e054912e3b0d16febc56510eff7e49d60bf22aecb463bd2f2a2dfa"
+)
+
+build() {
+  cd "${srcdir}/polib-${pkgver}"
+  python3 setup.py build
+}
+
+package() {
+  cd "${srcdir}/polib-${pkgver}"
+  python3 setup.py install \
+    --prefix=/usr \
+    --root="${pkgdir}" \ 
+    --skip-build --optimize=1
+}

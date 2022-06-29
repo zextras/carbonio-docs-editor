@@ -57,15 +57,8 @@ depends:yum=(
   "carbonio-openssl"
   "carbonio-docs-core"
   "cpio"
-  "cpp"
   "fontconfig"
   "google-roboto-fonts"
-  "m4"
-  "nasm"
-  "nodejs"
-  "patch"
-  "python36-lxml"
-  "python36-polib"
   "service-discover"
   "pending-setups"
 )
@@ -87,6 +80,8 @@ makedepends:yum=(
   "libtool"  
   "pam-devel"
   "pkgconfig"
+  "python3-lxml"
+  "python3-polib"
 )
 sources=(
   "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
@@ -101,8 +96,8 @@ sources=(
   "service-protocol.json"
 )
 hashsums=(
-  "a4f016a88ed9f98b35b0a3eb510988d3586196cf49941a117ec27651360c6a2c"
-  "9bf98b5da8678a8be5e53acf7629886a7ee5777536475618132430e2e8eb6062"
+  "4e5b5c9c3b242e6e8f97c02123c812103c3e47432c9b8c514b64cc7b0cc2e66a"
+  "b4bdcf3ffff1eee76d14eace960f90b356dbfd95e4bba089058d082dcc62a872"
   "skip"
   "skip"
   "skip"
@@ -114,8 +109,16 @@ hashsums=(
 )
 
 build() {
-  curl -sL https://deb.nodesource.com/setup_lts.x | bash - ;
-  apt-get -y install nodejs; 
+  # use this condition in order to avoid the entire
+  # build duplication only for nodejs
+  if [ -f /usr/bin/apt-get ]; then
+    curl -sL https://deb.nodesource.com/setup_lts.x | bash - ;
+    apt-get -y install nodejs; 
+  else
+    curl -sL https://rpm.nodesource.com/setup_lts.x | bash - ;
+    yum -y install nodejs; 
+  fi
+
   cd "${srcdir}/online-cp-${pkgver}-2"
 
   # Rebrand of static strings
@@ -261,4 +264,43 @@ postinst:apt() {
     echo "======================================================"
     ;;
   esac
+}
+
+preinst:yum() {
+  systemctl stop carbonio-docs-editor >/dev/null 2>&1 || true
+}
+
+postinst:yum() {
+  setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit
+  setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
+
+  id -u ${pkgname} >/dev/null 2>&1 || adduser --system -U -d /opt/zextras/docs/ ${pkgname} 2>/dev/null
+  mkdir -p /var/cache/carbonio-docs-server \
+    && chown ${pkgname}: /var/cache/${pkgname}
+  rm -rf /var/cache/coolwsd/*
+  chown ${pkgname}: -R /opt/zextras/docs/conf/
+  chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu
+
+  if [ ! -d /opt/zextras/docs/log ]; then
+    mkdir -p /opt/zextras/docs/log/
+	fi
+
+  chown ${pkgname}: -R /opt/zextras/docs/log/
+
+  rm -rf /opt/zextras/docs/generated/
+  mkdir -p /opt/zextras/docs/generated/
+  mkdir -p /opt/zextras/docs/generated/child-roots
+  chown ${pkgname}: -R /opt/zextras/docs/generated/
+
+  mkdir -p /opt/zextras/docs/core/share/fonts/custom
+  fc-cache /opt/zextras/docs/core/share/fonts/
+  su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
+  su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
+
+  systemctl daemon-reload || true
+
+  echo "======================================================"
+  echo "Carbonio Docs Editor installed successfully!"
+  echo "You must run pending-setups to configure it correctly."
+  echo "======================================================"
 }
