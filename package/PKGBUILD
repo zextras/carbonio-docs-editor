@@ -26,8 +26,6 @@ depends:apt=(
   "fonts-roboto"
   "libcap2-bin"
   "libpng16-16"
-  "python3-lxml" 
-  "python3-polib"
   "service-discover"
   "pending-setups"
 )
