@@ -98,7 +98,7 @@ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'artifacts/*.deb',
+                    archiveArtifacts artifacts: 'artifacts/*.rpm',
                     fingerprint: true
                 }
             }
