@@ -3,7 +3,7 @@ targets=(
   "ubuntu"
 )
 pkgname="carbonio-docs-editor"
-pkgver="21.11.3"
+pkgver="22.05.5"
 pkgrel="2"
 pkgdesc="A Web office suite for Carbonio"
 pkgdesclong=(
@@ -152,6 +152,7 @@ build() {
     --sysconfdir=/opt/zextras/docs/conf \
     --with-app-branding=/tmp/theme/dist \
     --with-app-name="Carbonio Docs Editor" \
+    --with-dictionaries="" \
     --with-lo-path=/opt/zextras/docs/core \
     --with-logfile=/opt/zextras/docs/log/docs-editor.log \
     --with-lokit-path=/opt/zextras/common/include \
