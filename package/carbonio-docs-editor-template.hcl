@@ -4,6 +4,9 @@ services {
     timeout  = "1s"
     interval = "5s"
   }
+  meta {
+    $METADATA_KEY = "$METADATA_VALUE"
+  }
   connect {
     sidecar_service {
       proxy {

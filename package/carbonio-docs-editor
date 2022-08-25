@@ -24,6 +24,14 @@ fi
 # Limit secret visibility as much as possible
 export -n SETUP_CONSUL_TOKEN
 
+# Generate service-router, service-resolver config and update carbonio-docs-editor.hcl
+serviceId=$(uuidgen)
+python3 /usr/lib/carbonio-docs-routes-generator.py \
+  -s carbonio-docs-editor \
+  -p service_id \
+  -i "$serviceId" \
+  -d /etc/carbonio/docs-editor/service-discover/
+
 POLICY_NAME='carbonio-docs-editor-policy'
 POLICY_DESCRIPTION='Carbonio Docs Editor service policy for service and sidecar proxy'
 
@@ -62,7 +70,16 @@ EOF
     systemctl daemon-reload
 fi
 
+# These three commands MUST be executed in this order:
+# 1. reload consul in order to register the service via carbonio-docs-editor.hcl
+# 2. write the service-resolver config in order to associate the Subsets ids for
+#    each docs-editor instance. It works only if the service is already registered
+# 3. write the service-router config in order to define the docs-editor routing
+#    It works only if the Subsets ids are applied to each instance.
 consul reload
+consul config write /etc/carbonio/docs-editor/service-discover/service-resolver.json
+consul config write /etc/carbonio/docs-editor/service-discover/service-router.json
+
 
 # Limit token visibility as much as possible
 export -n CONSUL_HTTP_TOKEN

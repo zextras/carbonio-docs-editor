@@ -4,7 +4,7 @@ targets=(
 )
 pkgname="carbonio-docs-editor"
 pkgver="22.05.5"
-pkgrel="2"
+pkgrel="3"
 pkgdesc="A Web office suite for Carbonio"
 pkgdesclong=(
   "A Web office suite for Carbonio"
@@ -85,17 +85,19 @@ sources=(
   "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
   "zextras-server.patch"
   "${pkgname}"
-  "${pkgname}.hcl"
+  "${pkgname}-template.hcl"
   "${pkgname}.service"
   "${pkgname}-sidecar.service"
   "${pkgname}-setup.sh"
   "intentions.json"
   "policies.json"
   "service-protocol.json"
+  "carbonio-docs-routes-generator.py"
 )
 hashsums=(
   "4e5b5c9c3b242e6e8f97c02123c812103c3e47432c9b8c514b64cc7b0cc2e66a"
   "b4bdcf3ffff1eee76d14eace960f90b356dbfd95e4bba089058d082dcc62a872"
+  "skip"
   "skip"
   "skip"
   "skip"
@@ -185,8 +187,8 @@ package() {
   install -Dm644 "${srcdir}/${pkgname}-sidecar.service" \
     "${pkgdir}/lib/systemd/system/${pkgname}-sidecar.service"
 
-  install -Dm755 "${srcdir}/${pkgname}.hcl" \
-    "${pkgdir}/etc/zextras/service-discover/${pkgname}.hcl"
+  install -Dm755 "${srcdir}/${pkgname}-template.hcl" \
+    "${pkgdir}/etc/zextras/service-discover/templates/${pkgname}-template.hcl"
 
   install -Dm 644 "${srcdir}/${pkgname}-setup.sh" \
     "${pkgdir}/etc/zextras/pending-setups.d/${pkgname}.sh"
@@ -199,6 +201,9 @@ package() {
 
   install -Dm 644 "${srcdir}/service-protocol.json" \
     "${pkgdir}/etc/carbonio/docs-editor/service-discover/service-protocol.json"
+
+  install -Dm 644 "${srcdir}/carbonio-docs-routes-generator.py" \
+    "${pkgdir}/usr/lib/carbonio-docs-routes-generator.py"
 
   cp -r /tmp/theme/dist/* \
     "${pkgdir}/opt/zextras/docs/share/coolwsd/browser/dist"
