@@ -4,7 +4,7 @@ targets=(
 )
 pkgname="carbonio-docs-editor"
 pkgver="22.05.5"
-pkgrel="3"
+pkgrel="4"
 pkgdesc="A Web office suite for Carbonio"
 pkgdesclong=(
   "A Web office suite for Carbonio"
