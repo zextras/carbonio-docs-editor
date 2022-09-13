@@ -23,7 +23,6 @@ depends:apt=(
   "carbonio-openssl"
   "carbonio-poco"
   "fontconfig"
-  "fonts-roboto"
   "libcap2-bin"
   "libpng16-16"
   "service-discover"
@@ -56,7 +55,6 @@ depends:yum=(
   "carbonio-docs-core"
   "cpio"
   "fontconfig"
-  "google-roboto-fonts"
   "service-discover"
   "pending-setups"
 )
