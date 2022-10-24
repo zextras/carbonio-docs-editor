@@ -31,7 +31,7 @@ pipeline {
                           branches: [[name: '*/carbonio']],
                           userRemoteConfigs: [[credentialsId: 'tarsier_bot-ssh-key',
                                                name: 'zimbra-docs-branding',
-                                               refspec: "refs/tags/22.05",
+                                               refspec: "refs/tags/22.05.06",
                                                url: 'git@bitbucket.org:zextras/zimbra-docs-branding.git'
                                              ]]
                          ])
