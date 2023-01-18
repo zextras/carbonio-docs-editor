@@ -28,11 +28,11 @@ pipeline {
                 checkout scm
                 dir('theme') {
                     checkout([$class: 'GitSCM',
-                          branches: [[name: '*/carbonio']],
-                          userRemoteConfigs: [[credentialsId: 'tarsier_bot-ssh-key',
-                                               name: 'zimbra-docs-branding',
+                          branches: [[name: '*/main']],
+                          userRemoteConfigs: [[credentialsId: 'jenkins-integration-with-github-account',
+                                               name: 'carbonio-docs-branding',
                                                refspec: "refs/tags/22.05.06",
-                                               url: 'git@bitbucket.org:zextras/zimbra-docs-branding.git'
+                                               url: 'git@github.com:Zextras/carbonio-docs-branding.git'
                                              ]]
                          ])
                 }
