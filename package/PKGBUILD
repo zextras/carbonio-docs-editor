@@ -3,7 +3,7 @@ targets=(
   "ubuntu"
 )
 pkgname="carbonio-docs-editor"
-pkgver="22.05.6"
+pkgver="22.05.12"
 pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 pkgdesclong=(
@@ -25,8 +25,9 @@ depends:apt=(
   "fontconfig"
   "libcap2-bin"
   "libpng16-16"
-  "service-discover"
+  "libzstd1"
   "pending-setups"
+  "service-discover"
 )
 makedepends:apt=(
   "autoconf"
@@ -42,21 +43,23 @@ makedepends:apt=(
   "libpam0g-dev"
   "libpng-dev"
   "libtool"
+  "libzstd-dev"
   "m4"
   "make"
   "pkg-config"
-  "python3"
   "python3-lxml"
   "python3-polib"
+  "python3"
 )
 depends:yum=(
-  "carbonio-poco"
-  "carbonio-openssl"
   "carbonio-docs-core"
+  "carbonio-openssl"
+  "carbonio-poco"
   "cpio"
   "fontconfig"
-  "service-discover"
+  "libzstd"
   "pending-setups"
+  "service-discover"
 )
 makedepends:yum=(
   "automake"
@@ -73,14 +76,15 @@ makedepends:yum=(
   "libcap-devel"
   "libcap-ng-devel"
   "libpng-devel"
-  "libtool"  
+  "libtool"
+  "libzstd-devel"
   "pam-devel"
   "pkgconfig"
   "python3-lxml"
   "python3-polib"
 )
 sources=(
-  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-3.tar.gz"
+  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-4.tar.gz"
   "zextras-server.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
@@ -117,7 +121,7 @@ build() {
     yum -y install nodejs; 
   fi
 
-  cd "${srcdir}/online-cp-${pkgver}-3"
+  cd "${srcdir}/online-cp-${pkgver}-4"
 
   # Rebrand of static strings
   sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
@@ -140,6 +144,9 @@ build() {
   sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2022, Zextras/g" \
     browser/html/cool.html.m4
 
+  export OPENSSL_CFLAGS="-I/opt/zextras/common/include"
+  export OPENSSL_LIBS="-L/opt/zextras/common/lib"
+
   ./autogen.sh
   ./configure --prefix=/opt/zextras/docs \
     --build=x86_64-linux-gnu \
@@ -158,6 +165,8 @@ build() {
     --with-lokit-path=/opt/zextras/common/include \
     --with-max-connections=10000 \
     --with-max-documents=10000 \
+    --with-openssl-includes=/opt/zextras/common/include \
+    --with-openssl-libs=/opt/zextras/common/lib \
     --with-poco-includes=/opt/zextras/common/include \
     --with-poco-libs=/opt/zextras/common/lib \
     --with-user-id="${pkgname}"
@@ -166,7 +175,7 @@ build() {
 }
 
 package() {
-  cd "${srcdir}/online-cp-${pkgver}-3"
+  cd "${srcdir}/online-cp-${pkgver}-4"
 
   make DESTDIR="${pkgdir}" install
 
