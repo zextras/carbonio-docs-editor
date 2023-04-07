@@ -38,7 +38,7 @@ makedepends:apt=(
   "carbonio-poco"
   "libcap-dev"
   "libcap2-bin"
-  "libcppunit-dev" 
+  "libcppunit-dev"
   "libfontconfig1-dev"
   "libpam0g-dev"
   "libpng-dev"
@@ -63,7 +63,7 @@ depends:yum=(
 )
 makedepends:yum=(
   "automake"
-  "bison"  
+  "bison"
   "carbonio-docs-core"
   "carbonio-openssl"
   "carbonio-poco"
@@ -114,11 +114,11 @@ build() {
   # use this condition in order to avoid the entire
   # build duplication only for nodejs
   if [ -f /usr/bin/apt-get ]; then
-    curl -sL https://deb.nodesource.com/setup_lts.x | bash - ;
-    apt-get -y install nodejs; 
+    curl -sL https://deb.nodesource.com/setup_lts.x | bash -
+    apt-get -y install nodejs
   else
-    curl -sL https://rpm.nodesource.com/setup_lts.x | bash - ;
-    yum -y install nodejs; 
+    curl -sL https://rpm.nodesource.com/setup_lts.x | bash -
+    yum -y install nodejs
   fi
 
   cd "${srcdir}/online-cp-${pkgver}-4"
@@ -218,10 +218,10 @@ package() {
   rm -rf "${pkgdir}/opt/zextras/docs/conf/nginx/"
 }
 
-preinst:apt() {
+preinst() {
   if [ -d /run/systemd/system ]; then
-    deb-systemd-invoke stop "${pkgname}.service" >/dev/null || true
-    deb-systemd-invoke stop "${pkgname}-sidecar.service" >/dev/null || true
+    systemctl stop "${pkgname}.service" >/dev/null 2>&1 || :
+    systemctl stop "${pkgname}-sidecar.service" >/dev/null 2>&1 || :
   fi
 }
 
@@ -232,15 +232,15 @@ postinst:apt() {
     setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
 
     id -u ${pkgname} >/dev/null 2>&1 || adduser --quiet --system --group --home /opt/zextras/docs/ ${pkgname} 2>/dev/null
-    mkdir -p /var/cache/carbonio-docs-server \
-      && chown ${pkgname}: /var/cache/${pkgname}
+    mkdir -p /var/cache/carbonio-docs-server &&
+      chown ${pkgname}: /var/cache/${pkgname}
     rm -rf /var/cache/coolwsd/*
     chown ${pkgname}: -R /opt/zextras/docs/conf/
     chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu
 
     if [ ! -d /opt/zextras/docs/log ]; then
       mkdir -p /opt/zextras/docs/log/
-	  fi
+    fi
 
     chown ${pkgname}: -R /opt/zextras/docs/log/
 
@@ -256,18 +256,18 @@ postinst:apt() {
     su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
 
     if deb-systemd-helper --quiet was-enabled "${pkgname}.service"; then
-      deb-systemd-helper enable "${pkgname}.service" >/dev/null || true
+      deb-systemd-helper enable "${pkgname}.service" >/dev/null || :
     else
-      deb-systemd-helper update-state "${pkgname}.service" >/dev/null || true
+      deb-systemd-helper update-state "${pkgname}.service" >/dev/null || :
     fi
 
     if deb-systemd-helper --quiet was-enabled "${pkgname}-sidecar.service"; then
-      deb-systemd-helper enable "${pkgname}-sidecar.service" >/dev/null || true
+      deb-systemd-helper enable "${pkgname}-sidecar.service" >/dev/null || :
     else
-      deb-systemd-helper update-state "${pkgname}-sidecar.service" >/dev/null || true
+      deb-systemd-helper update-state "${pkgname}-sidecar.service" >/dev/null || :
     fi
 
-    systemctl daemon-reload || true
+    systemctl daemon-reload || :
 
     echo "======================================================"
     echo "Carbonio Docs Editor installed successfully!"
@@ -277,24 +277,20 @@ postinst:apt() {
   esac
 }
 
-preinst:yum() {
-  systemctl stop carbonio-docs-editor >/dev/null 2>&1 || true
-}
-
 postinst:yum() {
   setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit
   setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
 
   id -u ${pkgname} >/dev/null 2>&1 || adduser --system -U -d /opt/zextras/docs/ ${pkgname} 2>/dev/null
-  mkdir -p /var/cache/carbonio-docs-server \
-    && chown ${pkgname}: /var/cache/${pkgname}
+  mkdir -p /var/cache/carbonio-docs-server &&
+    chown ${pkgname}: /var/cache/${pkgname}
   rm -rf /var/cache/coolwsd/*
   chown ${pkgname}: -R /opt/zextras/docs/conf/
   chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu
 
   if [ ! -d /opt/zextras/docs/log ]; then
     mkdir -p /opt/zextras/docs/log/
-	fi
+  fi
 
   chown ${pkgname}: -R /opt/zextras/docs/log/
 
@@ -308,7 +304,11 @@ postinst:yum() {
   su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
   su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
 
-  systemctl daemon-reload || true
+  if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || :
+    systemctl enable "${pkgname}.service" >/dev/null 2>&1 || :
+    systemctl enable "${pkgname}-sidecar.service" >/dev/null 2>&1 || :
+  fi
 
   echo "======================================================"
   echo "Carbonio Docs Editor installed successfully!"
