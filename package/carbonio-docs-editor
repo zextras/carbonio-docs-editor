@@ -24,13 +24,19 @@ fi
 # Limit secret visibility as much as possible
 export -n SETUP_CONSUL_TOKEN
 
-# Generate service-router, service-resolver config and update carbonio-docs-editor.hcl
-serviceId=$(uuidgen)
+# Generate service-router, service-resolver config and carbonio-docs-editor.hcl
 python3 /usr/lib/carbonio-docs-routes-generator.py \
+  add \
   -s carbonio-docs-editor \
   -p service_id \
-  -i "$serviceId" \
   -d /etc/carbonio/docs-editor/service-discover/
+
+if [[ "$?" != "0" ]]; then
+  echo "The generation of the carbonio-docs-editor configs files failed"
+  echo "(see /usr/lib/carbonio-docs-routes-generator.py)"
+  exit 1;
+fi
+
 
 POLICY_NAME='carbonio-docs-editor-policy'
 POLICY_DESCRIPTION='Carbonio Docs Editor service policy for service and sidecar proxy'
