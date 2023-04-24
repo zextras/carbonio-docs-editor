@@ -5,6 +5,29 @@
     {
       "Name": "carbonio-proxy",
       "Action": "allow"
+    },
+    {
+      "Name": "carbonio-preview",
+      "Permissions": [
+        {
+          "Action": "allow",
+          "HTTP": {
+            "PathExact": "/services/docs/editor/",
+            "Methods": [
+              "GET"
+            ]
+          }
+        },
+        {
+          "Action": "allow",
+          "HTTP": {
+            "PathRegex": "/services/docs/editor/cool/convert-to/(pdf|png|txt)",
+            "Methods": [
+              "POST"
+            ]
+          }
+        }
+      ]
     }
   ]
 }
