@@ -79,8 +79,8 @@ diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
  	}
  
 +	global.decodeServiceId = function () {
-+		params = docUrlParams.split('?')[1].split('&')
-+		window.serviceId = params.find((param) => param.includes('service_id')).split('=')[1]
++		let params = docUrlParams.split('?')[1].split('&')
++		window.serviceId = params.find(param => param.includes('service_id')).split('=')[1]
 +	};
 +
  	// Form a valid WS URL to the host with the given path.
