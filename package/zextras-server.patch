@@ -71,3 +71,46 @@ diff '--color=auto' -Naur a/wsd/COOLWSD.cpp b/wsd/COOLWSD.cpp
  
                              sendLoadResult(clientSession, true, "");
                          }
+diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
+--- a/browser/js/global.js
++++ b/browser/js/global.js
+@@ -805,6 +805,11 @@ window.app = {
+ 		global.docURL = filePath;
+ 	}
+ 
++	global.decodeServiceId = function () {
++		const params = docUrlParams.split('?')[1].split('&')
++		window.serviceId = params.find((param) => param.includes('service_id')).split('=')[1]
++	};
++
+ 	// Form a valid WS URL to the host with the given path.
+ 	global.makeWsUrl = function (path) {
+ 		window.app.console.assert(global.host.startsWith('ws'), 'host is not ws: ' + global.host);
+@@ -832,7 +837,8 @@ window.app = {
+ 		var encodedDocUrl = encodeURIComponent(docUrlParams) + suffix + wopiSrc;
+ 		if (global.hexifyUrl)
+ 			encodedDocUrl = global.hexEncode(encodedDocUrl);
+-		return root + encodedDocUrl + '/ws';
++		decodeServiceId();
++		return root + encodedDocUrl + '/ws&service_id=' + window.serviceId;
+ 	};
+ 
+ 	// Form a valid WS URL to the host with the given path and
+diff '--color=auto' -Naur a/browser/src/core/LOUtil.js b/browser/src/core/LOUtil.js
+--- a/browser/src/core/LOUtil.js
++++ b/browser/src/core/LOUtil.js
+@@ -87,6 +87,14 @@ L.LOUtil = {
+ 		if (path.substr(0,1) !== '/')
+ 			url += '/';
+ 		url += path;
++
++		if (!url.includes('?'))
++			url += '?';
++		else if (url.substring(url.indexOf('?')).length > 1) {
++			url += '&';
++		}
++
++		url += "service_id=" + window.serviceId;
+ 		return url;
+ 	},
+ 
