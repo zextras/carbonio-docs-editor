@@ -74,19 +74,21 @@ diff '--color=auto' -Naur a/wsd/COOLWSD.cpp b/wsd/COOLWSD.cpp
 diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
 --- a/browser/js/global.js
 +++ b/browser/js/global.js
-@@ -805,6 +805,11 @@ window.app = {
+@@ -805,6 +805,13 @@ window.app = {
  		global.docURL = filePath;
  	}
  
 +	global.decodeServiceId = function () {
-+		let params = docUrlParams.split('?')[1].split('&')
-+		window.serviceId = params.find(param => param.includes('service_id')).split('=')[1]
++		var params = docUrlParams.split('?')[1].split('&')
++		window.serviceId = params.find(function(param) {
++			return param.includes('service_id')
++		}).split('=')[1];
 +	};
 +
  	// Form a valid WS URL to the host with the given path.
  	global.makeWsUrl = function (path) {
  		window.app.console.assert(global.host.startsWith('ws'), 'host is not ws: ' + global.host);
-@@ -832,7 +837,8 @@ window.app = {
+@@ -832,7 +839,8 @@ window.app = {
  		var encodedDocUrl = encodeURIComponent(docUrlParams) + suffix + wopiSrc;
  		if (global.hexifyUrl)
  			encodedDocUrl = global.hexEncode(encodedDocUrl);
