@@ -79,7 +79,7 @@ diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
  	}
  
 +	global.decodeServiceId = function () {
-+		const params = docUrlParams.split('?')[1].split('&')
++		params = docUrlParams.split('?')[1].split('&')
 +		window.serviceId = params.find((param) => param.includes('service_id')).split('=')[1]
 +	};
 +
@@ -110,7 +110,7 @@ diff '--color=auto' -Naur a/browser/src/core/LOUtil.js b/browser/src/core/LOUtil
 +			url += '&';
 +		}
 +
-+		url += "service_id=" + window.serviceId;
++		url += 'service_id=' + window.serviceId;
  		return url;
  	},
  
