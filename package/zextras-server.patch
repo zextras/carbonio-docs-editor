@@ -78,10 +78,10 @@ diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
  		global.docURL = filePath;
  	}
  
-+	global.decodeServiceId = function () {
-+		var params = docUrlParams.split('?')[1].split('&')
++	global.decodeServiceId = function (docUrlParams) {
++		var params = docUrlParams.split('?')[1].split('&');
 +		window.serviceId = params.find(function(param) {
-+			return param.includes('service_id')
++			return param.includes('service_id');
 +		}).split('=')[1];
 +	};
 +
@@ -93,26 +93,9 @@ diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
  		if (global.hexifyUrl)
  			encodedDocUrl = global.hexEncode(encodedDocUrl);
 -		return root + encodedDocUrl + '/ws';
-+		decodeServiceId();
++		global.decodeServiceId(docUrlParams);
 +		return root + encodedDocUrl + '/ws&service_id=' + window.serviceId;
  	};
  
  	// Form a valid WS URL to the host with the given path and
-diff '--color=auto' -Naur a/browser/src/core/LOUtil.js b/browser/src/core/LOUtil.js
---- a/browser/src/core/LOUtil.js
-+++ b/browser/src/core/LOUtil.js
-@@ -87,6 +87,14 @@ L.LOUtil = {
- 		if (path.substr(0,1) !== '/')
- 			url += '/';
- 		url += path;
-+
-+		if (!url.includes('?'))
-+			url += '?';
-+		else if (url.substring(url.indexOf('?')).length > 1) {
-+			url += '&';
-+		}
-+
-+		url += 'service_id=' + window.serviceId;
- 		return url;
- 	},
  
