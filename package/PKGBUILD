@@ -316,6 +316,15 @@ postinst:yum() {
   echo "======================================================"
 }
 
+prerm() {
+  if [ -d /run/systemd/system ]; then
+    systemctl --no-reload disable carbonio-docs-editor.service >/dev/null 2>&1 || :
+    systemctl --no-reload disable carbonio-docs-editor-sidecar.service >/dev/null 2>&1 || :
+    systemctl stop carbonio-docs-editor.service >/dev/null 2>&1 || :
+    systemctl stop carbonio-docs-editor-sidecar.service >/dev/null 2>&1 || :
+  fi
+}
+
 postrm() {
   if [ -d /run/systemd/system ]; then
     systemctl daemon-reload >/dev/null 2>&1 || :
