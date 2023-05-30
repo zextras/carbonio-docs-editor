@@ -120,10 +120,8 @@ subparsers = root_parser.add_subparsers(dest="subcommand")
 
 # Sub-command 'add'
 add_parser = subparsers.add_parser("add", help="""
-    If this is the first time the service is installed in this node (server), 
-    then the 'add' subcommand generates the service-resolver, the service-router 
-    and the service hcl configuration files. Otherwise, it generates only the 
-    service hcl configuration file
+    The 'add' subcommand generates the service-resolver, the service-router 
+    and the service hcl configuration files
     """)
 add_parser.add_argument(
     "-s",
@@ -152,12 +150,11 @@ add_parser.add_argument(
 
 # Sub-command 'regenerate'
 regenerate_parser = subparsers.add_parser("regenerate", help="""
-    The 'regenerate' subcommand should be used after the service instance is 
-    removed from this node (server). 
+    The 'regenerate' subcommand should be used when a service instance is 
+    removed from a node and it should be removed also from the routing 
+    configurations. 
     It regenerates the service-resolver and service-router configs containing
-    ids of all the instances already registered without the deleted one.
-    It works only when consul does not have a registered service in this node, 
-    otherwise the script returns an error
+    ids of all the instances already registered without the deleted one
     """)
 regenerate_parser.add_argument(
     "-s",
@@ -231,37 +228,35 @@ if response.ok:
 
 if args.subcommand == "add":
     # Consul does not have a registered service instance for this node (server).
-    # So it is the first time the service is installed in this node, then:
-    # - Generate the service_id saving it in the service_ids list.
-    # - Generate the service-resolver and service-router configs containing ids
-    #   of all the instances already registered plus the new one. These configs
-    #   are generated only when a new instance is added to avoid conflicts
-    #   and errors when they are written in consul
+    # So it is the first time the service is installed in this node, then it
+    # generates the service_id saving it in the service_ids list.
     if not service_id:
         service_id = str(uuid.uuid4())
         service_ids.append(service_id)
 
-        resolver_conf: dict = _generate_service_resolver_config(
-            args.service_name,
-            args.parameter,
-            service_ids
-        )
-        router_conf: dict = _generate_service_router_config(
-            args.service_name,
-            args.parameter,
-            service_ids
-        )
+    # Generate the service-resolver and service-router configs containing ids
+    # of all the instances already registered plus the one installed/updated.
+    resolver_conf: dict = _generate_service_resolver_config(
+        args.service_name,
+        args.parameter,
+        service_ids
+    )
+    router_conf: dict = _generate_service_router_config(
+        args.service_name,
+        args.parameter,
+        service_ids
+    )
 
-        _write_config_to_file(
-            args.destination,
-            "service-resolver",
-            resolver_conf
-        )
-        _write_config_to_file(
-            args.destination,
-            "service-router",
-            router_conf
-        )
+    _write_config_to_file(
+        args.destination,
+        "service-resolver",
+        resolver_conf
+    )
+    _write_config_to_file(
+        args.destination,
+        "service-router",
+        router_conf
+    )
 
     # Generate the service config (hcl). This should be generated each time a
     # service instance is installed or updated
@@ -272,40 +267,32 @@ if args.subcommand == "add":
     )
 
 elif args.subcommand == "regenerate":
-    # The 'regenerate' subcommand is called when an instance is removed from the
-    # node so the configs should be regenerated only when consul does not have a
-    # registered service in this node. Otherwise, the script prints the help of
-    # this subcommand:
-    if not service_id:
-        # Generate the service-resolver and service-router configs containing
-        # ids of all the instances already registered without the deleted one.
-        resolver_conf: dict = _generate_service_resolver_config(
-            args.service_name,
-            args.parameter,
-            service_ids
-        )
-        router_conf: dict = _generate_service_router_config(
-            args.service_name,
-            args.parameter,
-            service_ids
-        )
+    # The 'regenerate' subcommand is called when the sysadmin wants to
+    # regenerate the consul routing configurations after the deletion of an
+    # instance.
 
-        _write_config_to_file(
-            args.destination,
-            "service-resolver",
-            resolver_conf
-        )
-        _write_config_to_file(
-            args.destination,
-            "service-router",
-            router_conf
-        )
-    else:
-        print(
-            f"Error: the regenerate subcommand is called on a server where "
-            f"the instance is still installed. You need to remove it before "
-            f"running the regeneration of the configs"
-        )
-        exit(1)
+    # Generate the service-resolver and service-router configs containing
+    # ids of all the instances already registered without the deleted one.
+    resolver_conf: dict = _generate_service_resolver_config(
+        args.service_name,
+        args.parameter,
+        service_ids
+    )
+    router_conf: dict = _generate_service_router_config(
+        args.service_name,
+        args.parameter,
+        service_ids
+    )
+
+    _write_config_to_file(
+        args.destination,
+        "service-resolver",
+        resolver_conf
+    )
+    _write_config_to_file(
+        args.destination,
+        "service-router",
+        router_conf
+    )
 else:
     root_parser.print_help()
