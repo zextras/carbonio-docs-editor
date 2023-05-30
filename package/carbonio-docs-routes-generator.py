@@ -120,10 +120,8 @@ subparsers = root_parser.add_subparsers(dest="subcommand")
 
 # Sub-command 'add'
 add_parser = subparsers.add_parser("add", help="""
-    If this is the first time the service is installed in this node (server), 
-    then the 'add' subcommand generates the service-resolver, the service-router 
-    and the service hcl configuration files. Otherwise, it generates only the 
-    service hcl configuration file
+    The 'add' subcommand generates the service-resolver, the service-router 
+    and the service hcl configuration files
     """)
 add_parser.add_argument(
     "-s",
