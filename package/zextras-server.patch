@@ -74,28 +74,63 @@ diff '--color=auto' -Naur a/wsd/COOLWSD.cpp b/wsd/COOLWSD.cpp
 diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
 --- a/browser/js/global.js
 +++ b/browser/js/global.js
-@@ -805,6 +805,13 @@ window.app = {
+@@ -813,6 +813,16 @@
  		global.docURL = filePath;
  	}
- 
+
 +	global.decodeServiceId = function (docUrlParams) {
 +		var params = docUrlParams.split('?')[1].split('&');
-+		window.serviceId = params.find(function(param) {
++		var serviceId = params.find(function (param) {
 +			return param.includes('service_id');
-+		}).split('=')[1];
++		});
++		if (serviceId) {
++			window.serviceId = serviceId.split('=')[1];
++		}
 +	};
 +
  	// Form a valid WS URL to the host with the given path.
  	global.makeWsUrl = function (path) {
  		window.app.console.assert(global.host.startsWith('ws'), 'host is not ws: ' + global.host);
-@@ -832,7 +839,8 @@ window.app = {
+@@ -840,7 +850,9 @@
  		var encodedDocUrl = encodeURIComponent(docUrlParams) + suffix + wopiSrc;
  		if (global.hexifyUrl)
  			encodedDocUrl = global.hexEncode(encodedDocUrl);
 -		return root + encodedDocUrl + '/ws';
 +		global.decodeServiceId(docUrlParams);
-+		return root + encodedDocUrl + '/ws&service_id=' + window.serviceId;
++		var serviceId = (window.serviceId) ?'&service_id=' + window.serviceId : '';
++		return root + encodedDocUrl + '/ws' + serviceId;
  	};
- 
+
  	// Form a valid WS URL to the host with the given path and
- 
+diff '--color=auto' -Naur a/browser/src/map/Clipboard.js b/browser/src/map/Clipboard.js
+--- a/browser/src/map/Clipboard.js
++++ b/browser/src/map/Clipboard.js
+@@ -76,7 +76,8 @@
+ 		if (!idx)
+ 			idx = 0;
+
+-		var metaPath = '/cool/clipboard?WOPISrc=' + encodeURIComponent(this._map.options.doc) +
++		var serviceId = (window.serviceId) ? '?service_id=' + window.serviceId + '&' : '?';
++		var metaPath = '/cool/clipboard' + serviceId + 'WOPISrc=' + encodeURIComponent(this._map.options.doc) +
+ 			'&ServerId=' + app.socket.WSDServer.Id +
+ 			'&ViewId=' + this._map._docLayer._viewId +
+ 			'&Tag=' + this._accessKey[idx];
+
+ diff '--color=auto' -Naur a/browser/src/control/Toolbar.js b/browser/src/control/Toolbar.js
+ --- a/browser/src/control/Toolbar.js
+ +++ b/browser/src/control/Toolbar.js
+@@ -394,6 +394,14 @@
+
+ 		if (this.uiManager.isUIBlocked())
+ 			return;
++   // This check is necessary to allow the user to change a language in the More.. modal
++		if (this.jsdialog
++			&& this.jsdialog.hasDialogOpened()
++			&& command.startsWith('.uno:LanguageStatus?Language')
++		) {
++			app.socket.sendMessage('uno ' + command);
++			return;
++		}
+ 		if ((this.dialog.hasOpenedDialog() || (this.jsdialog && this.jsdialog.hasDialogOpened()))
+ 			&& !command.startsWith('.uno:ToolbarMode') && !force) {
+ 			console.debug('Cannot execute: ' + command + ' when dialog is opened.');
