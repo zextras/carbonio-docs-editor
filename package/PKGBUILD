@@ -3,8 +3,8 @@ targets=(
   "ubuntu"
 )
 pkgname="carbonio-docs-editor"
-pkgver="23.05.0"
-pkgrel="2"
+pkgver="23.05.1"
+pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 pkgdesclong=(
   "A Web office suite for Carbonio"
@@ -84,7 +84,7 @@ makedepends:yum=(
   "python3-polib"
 )
 sources=(
-  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-5.tar.gz"
+  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
   "zextras-server.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
@@ -97,7 +97,7 @@ sources=(
   "carbonio-docs-routes-generator.py"
 )
 hashsums=(
-  "f62525175ccfe3437e5d348d08ddf33d662ed4df7dd9359520c5b9de3f840251"
+  "5c32889c9e0f9508b1a0850a4bbec503e236a4e45d889b0a417772cb0c4d56c6"
   "7f7193043ceddd2c72768e9b5f80523799af615ed63f4ded2b1d0b29e0170947"
   "skip"
   "skip"
@@ -121,7 +121,7 @@ build() {
     yum -y install nodejs
   fi
 
-  cd "${srcdir}/online-cp-${pkgver}-5"
+  cd "${srcdir}/online-cp-${pkgver}-2"
 
   # Rebrand of static strings
   sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
@@ -175,7 +175,7 @@ build() {
 }
 
 package() {
-  cd "${srcdir}/online-cp-${pkgver}-5"
+  cd "${srcdir}/online-cp-${pkgver}-2"
 
   make DESTDIR="${pkgdir}" install
 
