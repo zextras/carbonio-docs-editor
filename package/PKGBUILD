@@ -255,19 +255,11 @@ postinst:apt() {
     su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
     su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
 
-    if deb-systemd-helper --quiet was-enabled "${pkgname}.service"; then
-      deb-systemd-helper enable "${pkgname}.service" >/dev/null || :
-    else
-      deb-systemd-helper update-state "${pkgname}.service" >/dev/null || :
+    if [ -d /run/systemd/system ]; then
+      systemctl daemon-reload >/dev/null 2>&1 || :
+      systemctl enable "${pkgname}.service" >/dev/null 2>&1 || :
+      systemctl enable "${pkgname}-sidecar.service" >/dev/null 2>&1 || :
     fi
-
-    if deb-systemd-helper --quiet was-enabled "${pkgname}-sidecar.service"; then
-      deb-systemd-helper enable "${pkgname}-sidecar.service" >/dev/null || :
-    else
-      deb-systemd-helper update-state "${pkgname}-sidecar.service" >/dev/null || :
-    fi
-
-    systemctl daemon-reload || :
 
     echo "======================================================"
     echo "Carbonio Docs Editor installed successfully!"
