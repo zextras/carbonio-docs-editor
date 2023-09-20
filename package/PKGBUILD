@@ -46,6 +46,7 @@ makedepends:apt=(
   "libzstd-dev"
   "m4"
   "make"
+  "nodejs"
   "pkg-config"
   "python3-lxml"
   "python3-polib"
@@ -78,6 +79,7 @@ makedepends:yum=(
   "libpng-devel"
   "libtool"
   "libzstd-devel"
+  "nodejs"
   "pam-devel"
   "pkgconfig"
   "python3-lxml"
@@ -111,16 +113,6 @@ hashsums=(
 )
 
 build() {
-  # use this condition in order to avoid the entire
-  # build duplication only for nodejs
-  if [ -f /usr/bin/apt-get ]; then
-    curl -sL https://deb.nodesource.com/setup_lts.x | bash -
-    apt-get -y install nodejs
-  else
-    curl -sL https://rpm.nodesource.com/setup_lts.x | bash -
-    yum -y install nodejs
-  fi
-
   cd "${srcdir}/online-cp-${pkgver}-2"
 
   # Rebrand of static strings
