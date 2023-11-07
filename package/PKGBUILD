@@ -1,27 +1,21 @@
-targets=(
-  "centos"
-  "ubuntu"
-)
 pkgname="carbonio-docs-editor"
 pkgver="23.05.1"
 pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
-pkgdesclong=(
-  "A Web office suite for Carbonio"
-)
 maintainer="Zextras <packages@zextras.com>"
 url="https://zextras.com"
 section="mail"
 priority="optional"
-arch="amd64"
+arch=('x86_64')
 backup=(
-  "/opt/zextras/docs/conf/coolwsd.xml"
-  "/opt/zextras/docs/conf/coolkitconfig.xcu"
+  "opt/zextras/docs/conf/coolwsd.xml"
+  "opt/zextras/docs/conf/coolkitconfig.xcu"
 )
-depends:apt=(
+depends__apt=(
   "carbonio-docs-core"
   "carbonio-openssl"
   "carbonio-poco"
+  "cpio"
   "fontconfig"
   "libcap2-bin"
   "libpng16-16"
@@ -29,13 +23,15 @@ depends:apt=(
   "pending-setups"
   "service-discover"
 )
-makedepends:apt=(
+makedepends__apt=(
   "autoconf"
   "automake"
   "bison"
   "carbonio-docs-core"
   "carbonio-openssl"
   "carbonio-poco"
+  "cpio"
+  "git"
   "libcap-dev"
   "libcap2-bin"
   "libcppunit-dev"
@@ -52,22 +48,24 @@ makedepends:apt=(
   "python3-polib"
   "python3"
 )
-depends:yum=(
+depends__yum=(
   "carbonio-docs-core"
   "carbonio-openssl"
   "carbonio-poco"
   "cpio"
   "fontconfig"
+  "libcap"
   "libzstd"
   "pending-setups"
   "service-discover"
 )
-makedepends:yum=(
+makedepends__yum=(
   "automake"
   "bison"
   "carbonio-docs-core"
   "carbonio-openssl"
   "carbonio-poco"
+  "cpio"
   "cppunit-devel"
   "cups-devel"
   "flex"
@@ -85,7 +83,7 @@ makedepends:yum=(
   "python3-lxml"
   "python3-polib"
 )
-sources=(
+source=(
   "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
   "zextras-server.patch"
   "${pkgname}"
@@ -98,19 +96,17 @@ sources=(
   "service-protocol.json"
   "carbonio-docs-routes-generator.py"
 )
-hashsums=(
-  "5c32889c9e0f9508b1a0850a4bbec503e236a4e45d889b0a417772cb0c4d56c6"
-  "7f7193043ceddd2c72768e9b5f80523799af615ed63f4ded2b1d0b29e0170947"
-  "skip"
-  "skip"
-  "skip"
-  "skip"
-  "skip"
-  "skip"
-  "skip"
-  "skip"
-  "skip"
-)
+sha256sums=('5c32889c9e0f9508b1a0850a4bbec503e236a4e45d889b0a417772cb0c4d56c6'
+  '9fc24b307287065a53fac754f7775773068e8441877c56baf248fcad3b490e30'
+  'eb1673fe3a5d08cff7700bbae2eddb8fc172f857b299aeadbd191e87e007ce0b'
+  'f7ebde2d9e4c7408f9cde0b074d733e12b90b0c0cd1ae09af0f2ba3de14b0583'
+  '3ef83cc8c4571ca0508adf345bd55b398b7d4c5ef838bcccdd04ab500b88af1a'
+  '0bf7d615356be9fb184b3e726d684c88981e6f91d0d35f407df99000f16437b2'
+  '13b502512fa0cb8e1e7d88048c63c4b3f2c4b72de0e25a269d97995de00bc1a3'
+  '446bec4570aeeca9f1e20ed2b555ff2c3c6ccea4f241a26a970203d240a2c2c8'
+  'cce9a36e4e173901f54fe399f120da749054b98a377bcbd7f34b7b50457385c1'
+  'b826148eb99e2969a27566ddd84c3991eff0f744e68c103b2a1374c10da0adfb'
+  '4ed722abedf4ab4dc0d25e86094ea583804121bdb4a2077113f743fbea47a30c')
 
 build() {
   cd "${srcdir}/online-cp-${pkgver}-2"
@@ -120,7 +116,7 @@ build() {
     $(grep -iIr "Collabora Online Development Edition" . | cut -d":" -f1)
 
   # Add zx spice
-  patch -Np1 -i ../zextras-server.patch
+  patch -Np1 -i "${srcdir}/zextras-server.patch"
 
   # Disable unit-tests
   sed -i "s/test cypress_test//" Makefile.am
@@ -140,7 +136,7 @@ build() {
   export OPENSSL_LIBS="-L/opt/zextras/common/lib"
 
   ./autogen.sh
-  ./configure --prefix=/opt/zextras/docs \
+  ./configure \
     --build=x86_64-linux-gnu \
     --disable-debug \
     --disable-debug-protocol \
@@ -148,6 +144,7 @@ build() {
     --enable-ssl \
     --host=x86_64-linux-gnu \
     --localstatedir=/var \
+    --prefix=/opt/zextras/docs \
     --sysconfdir=/opt/zextras/docs/conf \
     --with-app-branding=/tmp/theme/dist \
     --with-app-name="Carbonio Docs Editor" \
@@ -157,13 +154,11 @@ build() {
     --with-lokit-path=/opt/zextras/common/include \
     --with-max-connections=10000 \
     --with-max-documents=10000 \
-    --with-openssl-includes=/opt/zextras/common/include \
-    --with-openssl-libs=/opt/zextras/common/lib \
     --with-poco-includes=/opt/zextras/common/include \
     --with-poco-libs=/opt/zextras/common/lib \
     --with-user-id="${pkgname}"
 
-  make build-nocheck -j"$(nproc)"
+  make build-nocheck -j8
 }
 
 package() {
@@ -212,86 +207,86 @@ package() {
 
 preinst() {
   if [ -d /run/systemd/system ]; then
-    systemctl stop "${pkgname}.service" >/dev/null 2>&1 || :
-    systemctl stop "${pkgname}-sidecar.service" >/dev/null 2>&1 || :
+    systemctl stop carbonio-docs-editor.service >/dev/null 2>&1 || :
+    systemctl stop carbonio-docs-editor-sidecar.service >/dev/null 2>&1 || :
   fi
 }
 
-postinst:apt() {
+postinst__apt() {
   case "$1" in
-  configure)
-    setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit
-    setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
+    configure)
+      setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit
+      setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
 
-    id -u ${pkgname} >/dev/null 2>&1 || adduser --quiet --system --group --home /opt/zextras/docs/ ${pkgname} 2>/dev/null
-    mkdir -p /var/cache/carbonio-docs-server &&
-      chown ${pkgname}: /var/cache/${pkgname}
-    rm -rf /var/cache/coolwsd/*
-    chown ${pkgname}: -R /opt/zextras/docs/conf/
-    chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu
+      id -u carbonio-docs-editor >/dev/null 2>&1 || adduser --quiet --system --group --home /opt/zextras/docs/ carbonio-docs-editor 2>/dev/null
+      mkdir -p /var/cache/carbonio-docs-server &&
+        chown carbonio-docs-editor: /var/cache/carbonio-docs-editor
+      rm -rf /var/cache/coolwsd/*
+      chown carbonio-docs-editor: -R /opt/zextras/docs/conf/
+      chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu
 
-    if [ ! -d /opt/zextras/docs/log ]; then
-      mkdir -p /opt/zextras/docs/log/
-    fi
+      if [ ! -d /opt/zextras/docs/log ]; then
+        mkdir -p /opt/zextras/docs/log/
+      fi
 
-    chown ${pkgname}: -R /opt/zextras/docs/log/
+      chown carbonio-docs-editor: -R /opt/zextras/docs/log/
 
-    rm -rf /opt/zextras/docs/generated/
-    mkdir -p /opt/zextras/docs/generated/
-    mkdir -p /opt/zextras/docs/generated/child-roots
-    chown ${pkgname}: -R /opt/zextras/docs/generated/
+      rm -rf /opt/zextras/docs/generated/
+      mkdir -p /opt/zextras/docs/generated/
+      mkdir -p /opt/zextras/docs/generated/child-roots
+      chown carbonio-docs-editor: -R /opt/zextras/docs/generated/
 
-    mkdir -p /opt/zextras/docs/core/share/fonts/custom
-    fc-cache /opt/zextras/docs/core/share/fonts/
+      mkdir -p /opt/zextras/docs/core/share/fonts/custom
+      fc-cache /opt/zextras/docs/core/share/fonts/
 
-    su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
-    su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
+      su carbonio-docs-editor --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
+      su carbonio-docs-editor --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
 
-    if [ -d /run/systemd/system ]; then
-      systemctl daemon-reload >/dev/null 2>&1 || :
-      systemctl enable "${pkgname}.service" >/dev/null 2>&1 || :
-      systemctl enable "${pkgname}-sidecar.service" >/dev/null 2>&1 || :
-    fi
+      if [ -d /run/systemd/system ]; then
+        systemctl daemon-reload >/dev/null 2>&1 || :
+        systemctl enable carbonio-docs-editor.service >/dev/null 2>&1 || :
+        systemctl enable carbonio-docs-editor-sidecar.service >/dev/null 2>&1 || :
+      fi
 
-    echo "======================================================"
-    echo "Carbonio Docs Editor installed successfully!"
-    echo "You must run pending-setups to configure it correctly."
-    echo "======================================================"
-    ;;
+      echo "======================================================"
+      echo "Carbonio Docs Editor installed successfully!"
+      echo "You must run pending-setups to configure it correctly."
+      echo "======================================================"
+      ;;
   esac
 }
 
-postinst:yum() {
+postinst__yum() {
   setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit
   setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
 
-  id -u ${pkgname} >/dev/null 2>&1 || adduser --system -U -d /opt/zextras/docs/ ${pkgname} 2>/dev/null
+  id -u carbonio-docs-editor >/dev/null 2>&1 || adduser --system -U -d /opt/zextras/docs/ carbonio-docs-editor 2>/dev/null
   mkdir -p /var/cache/carbonio-docs-server &&
-    chown ${pkgname}: /var/cache/${pkgname}
+    chown carbonio-docs-editor: /var/cache/carbonio-docs-editor
   rm -rf /var/cache/coolwsd/*
-  chown ${pkgname}: -R /opt/zextras/docs/conf/
+  chown carbonio-docs-editor: -R /opt/zextras/docs/conf/
   chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu
 
   if [ ! -d /opt/zextras/docs/log ]; then
     mkdir -p /opt/zextras/docs/log/
   fi
 
-  chown ${pkgname}: -R /opt/zextras/docs/log/
+  chown carbonio-docs-editor: -R /opt/zextras/docs/log/
 
   rm -rf /opt/zextras/docs/generated/
   mkdir -p /opt/zextras/docs/generated/
   mkdir -p /opt/zextras/docs/generated/child-roots
-  chown ${pkgname}: -R /opt/zextras/docs/generated/
+  chown carbonio-docs-editor: -R /opt/zextras/docs/generated/
 
   mkdir -p /opt/zextras/docs/core/share/fonts/custom
   fc-cache /opt/zextras/docs/core/share/fonts/
-  su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
-  su ${pkgname} --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
+  su carbonio-docs-editor --shell=/bin/sh -c "/opt/zextras/docs/bin/coolwsd-systemplate-setup /opt/zextras/docs/generated/systemplate /opt/zextras/docs/core/ >/dev/null 2>&1"
+  su carbonio-docs-editor --shell=/bin/sh -c "/opt/zextras/docs/bin/loolwsd-generate-proof-key >/dev/null 2>&1"
 
   if [ -d /run/systemd/system ]; then
     systemctl daemon-reload >/dev/null 2>&1 || :
-    systemctl enable "${pkgname}.service" >/dev/null 2>&1 || :
-    systemctl enable "${pkgname}-sidecar.service" >/dev/null 2>&1 || :
+    systemctl enable carbonio-docs-editor.service >/dev/null 2>&1 || :
+    systemctl enable carbonio-docs-editor-sidecar.service >/dev/null 2>&1 || :
   fi
 
   echo "======================================================"
