@@ -1,6 +1,5 @@
 {
   "Kind": "service-defaults",
   "Name": "carbonio-docs-editor",
-  "Protocol": "http",
-  "Websocket": true
+  "Protocol": "http"
 }
