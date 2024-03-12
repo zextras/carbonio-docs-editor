@@ -55,7 +55,7 @@ pipeline {
                         sh 'echo "password $SECRET" >> auth.conf'
                         sh 'sudo mv auth.conf /etc/apt'
                 }
-                sh 'echo "deb https://zextras.jfrog.io/artifactory/ubuntu-playground focal main" > zextras.list'
+                sh 'echo "deb https://zextras.jfrog.io/artifactory/ubuntu-rc focal main" > zextras.list'
                 sh 'sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243E584A21'
                 sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
                 sh 'sudo mv *.list /etc/apt/sources.list.d/'
@@ -87,7 +87,7 @@ pipeline {
                         sh 'echo "password $SECRET" >> auth.conf'
                         sh 'sudo mv auth.conf /etc/apt'
                 }
-                sh 'echo "deb https://zextras.jfrog.io/artifactory/ubuntu-playground jammy main" > zextras.list'
+                sh 'echo "deb https://zextras.jfrog.io/artifactory/ubuntu-rc jammy main" > zextras.list'
                 sh 'sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243E584A21'
                 sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
                 sh 'sudo mv *.list /etc/apt/sources.list.d/'
@@ -115,10 +115,10 @@ pipeline {
                     passwordVariable: 'SECRET',
                     usernameVariable: 'USERNAME')]) {
                         sh 'echo "[Zextras]" > zextras.repo'
-                        sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-playground/" >> zextras.repo'
+                        sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-rc/" >> zextras.repo'
                         sh 'echo "enabled=1" >> zextras.repo'
                         sh 'echo "gpgcheck=0" >> zextras.repo'
-                        sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-playground/repomd.xml.key" >> zextras.repo'
+                        sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-rc/repomd.xml.key" >> zextras.repo'
 
                         sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
                         sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
@@ -152,10 +152,10 @@ pipeline {
                     passwordVariable: 'SECRET',
                     usernameVariable: 'USERNAME')]) {
                         sh 'echo "[Zextras]" > zextras.repo'
-                        sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-playground/" >> zextras.repo'
+                        sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-rc/" >> zextras.repo'
                         sh 'echo "enabled=1" >> zextras.repo'
                         sh 'echo "gpgcheck=0" >> zextras.repo'
-                        sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-playground/repomd.xml.key" >> zextras.repo'
+                        sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-rc/repomd.xml.key" >> zextras.repo'
                         sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
 
                         sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
@@ -299,7 +299,7 @@ pipeline {
 
                     // rhel9
                     buildInfo = Artifactory.newBuildInfo()
-                    buildInfo.name += "-centos8"
+                    buildInfo.name += "-rhel9"
                     uploadSpec= """{
                         "files": [
                             {
