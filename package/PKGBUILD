@@ -1,6 +1,6 @@
 pkgname="carbonio-docs-editor"
 pkgver="23.05.1"
-pkgrel="2"
+pkgrel="3"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
 url="https://zextras.com"
@@ -21,6 +21,7 @@ depends__apt=(
   "libpng16-16"
   "libzstd1"
   "pending-setups"
+  "python3-requests"
   "service-discover"
 )
 makedepends__apt=(
@@ -57,6 +58,7 @@ depends__yum=(
   "libcap"
   "libzstd"
   "pending-setups"
+  "python3-requests"
   "service-discover"
 )
 makedepends__yum=(
