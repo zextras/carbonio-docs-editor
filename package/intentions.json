@@ -21,7 +21,7 @@
         {
           "Action": "allow",
           "HTTP": {
-            "PathRegex": "/services/docs/editor/cool/convert-to/(pdf|png|txt)",
+            "PathRegex": "/services/docs/editor/cool/convert-to/(pdf|png|txt)(\\?lang=(.*))?",
             "Methods": [
               "POST"
             ]
