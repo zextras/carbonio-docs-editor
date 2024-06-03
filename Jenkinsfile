@@ -31,7 +31,7 @@ pipeline {
                           branches: [[name: '*/main']],
                           userRemoteConfigs: [[credentialsId: 'jenkins-integration-with-github-account',
                                                name: 'carbonio-docs-branding',
-                                               refspec: "refs/tags/23.05.0",
+                                               refspec: "refs/tags/23.05.12",
                                                url: 'git@github.com:Zextras/carbonio-docs-branding.git'
                                              ]]
                          ])
