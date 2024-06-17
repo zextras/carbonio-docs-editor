@@ -1,6 +1,6 @@
 pkgname="carbonio-docs-editor"
-pkgver="23.05.1"
-pkgrel="3"
+pkgver="23.05.12"
+pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
 url="https://zextras.com"
@@ -48,6 +48,7 @@ makedepends__apt=(
   "python3-lxml"
   "python3-polib"
   "python3"
+  "rsync"
 )
 depends__yum=(
   "carbonio-docs-core"
@@ -82,12 +83,14 @@ makedepends__yum=(
   "libzstd-devel"
   "nodejs"
   "pam-devel"
+  "pcre-devel"
   "pkgconfig"
   "python3-lxml"
   "python3-polib"
+  "rsync"
 )
 source=(
-  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
+  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-1.tar.gz"
   "zextras-server.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
@@ -99,7 +102,7 @@ source=(
   "service-protocol.json"
   "carbonio-docs-routes-generator.py"
 )
-sha256sums=('5c32889c9e0f9508b1a0850a4bbec503e236a4e45d889b0a417772cb0c4d56c6'
+sha256sums=('dc6e52dd7b8a0e5fdd40873a1340fc696b77a0ec15a4faa999fc8aa45a7bea5a'
   '9fc24b307287065a53fac754f7775773068e8441877c56baf248fcad3b490e30'
   'eb1673fe3a5d08cff7700bbae2eddb8fc172f857b299aeadbd191e87e007ce0b'
   'f7ebde2d9e4c7408f9cde0b074d733e12b90b0c0cd1ae09af0f2ba3de14b0583'
@@ -111,8 +114,8 @@ sha256sums=('5c32889c9e0f9508b1a0850a4bbec503e236a4e45d889b0a417772cb0c4d56c6'
   'b826148eb99e2969a27566ddd84c3991eff0f744e68c103b2a1374c10da0adfb'
   '4ed722abedf4ab4dc0d25e86094ea583804121bdb4a2077113f743fbea47a30c')
 
-build() {
-  cd "${srcdir}/online-cp-${pkgver}-2"
+build__apt() {
+  cd "${srcdir}/online-cp-${pkgver}-1"
 
   # Rebrand of static strings
   sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
@@ -132,7 +135,7 @@ build() {
   sed -Ei "s#CLEANUP_COMMAND=.*#CLEANUP_COMMAND=true#" test/Makefile.am
 
   # use Zextras and Collabora Copyright label in about dialog
-  sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2023, Zextras/g" \
+  sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2024, Zextras/g" \
     browser/html/cool.html.m4
 
   export OPENSSL_CFLAGS="-I/opt/zextras/common/include"
@@ -144,6 +147,7 @@ build() {
     --disable-debug \
     --disable-debug-protocol \
     --disable-setcap \
+    --disable-tests \
     --enable-ssl \
     --host=x86_64-linux-gnu \
     --localstatedir=/var \
@@ -164,8 +168,62 @@ build() {
   make build-nocheck -j8
 }
 
+build__yum() {
+  cd "${srcdir}/online-cp-${pkgver}-1"
+
+  # Rebrand of static strings
+  sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
+    $(grep -iIr "Collabora Online Development Edition" . | cut -d":" -f1)
+
+  # Add zx spice
+  patch -Np1 -i "${srcdir}/zextras-server.patch"
+
+  # Disable unit-tests
+  sed -i "s/test cypress_test//" Makefile.am
+
+  # Force /opt/zextras/docs/conf path and inject some sane defaults
+  sed -Ei "s#COOLWSD_CONFIGDIR=.*#COOLWSD_CONFIGDIR=/opt/zextras/docs/conf#" configure.ac
+  sed -Ei "s#COOLWSD_LOGLEVEL=.*#COOLWSD_LOGLEVEL=information#" configure.ac
+  sed -Ei "s#COOLWSD_VERSION_HASH=.*#COOLWSD_VERSION_HASH=dist#" configure.ac
+  sed -Ei "s#COOLWSD_LOG_TO_FILE=.*#COOLWSD_LOG_TO_FILE=true#" configure.ac
+  sed -Ei "s#CLEANUP_COMMAND=.*#CLEANUP_COMMAND=true#" test/Makefile.am
+
+  # use Zextras and Collabora Copyright label in about dialog
+  sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2024, Zextras/g" \
+    browser/html/cool.html.m4
+
+  export OPENSSL_CFLAGS="-I/opt/zextras/common/include"
+  export OPENSSL_LIBS="-L/opt/zextras/common/lib"
+
+  ./autogen.sh
+  ./configure \
+    --build=x86_64-linux-gnu \
+    --disable-debug \
+    --disable-debug-protocol \
+    --disable-setcap \
+    --disable-tests \
+    --enable-ssl \
+    --host=x86_64-linux-gnu \
+    --localstatedir=/var \
+    --prefix=/opt/zextras/docs \
+    --sysconfdir=/opt/zextras/docs/conf \
+    --with-app-branding=/tmp/theme/dist \
+    --with-app-name="Carbonio Docs Editor" \
+    --with-dictionaries="" \
+    --with-lo-path=/opt/zextras/docs/core \
+    --with-logfile=/opt/zextras/docs/log/docs-editor.log \
+    --with-lokit-path=/opt/zextras/common/include \
+    --with-max-connections=10000 \
+    --with-max-documents=10000 \
+    --with-poco-includes=/opt/zextras/common/include \
+    --with-poco-libs=/opt/zextras/common/lib64 \
+    --with-user-id="${pkgname}"
+
+  make build-nocheck -j8
+}
+
 package() {
-  cd "${srcdir}/online-cp-${pkgver}-2"
+  cd "${srcdir}/online-cp-${pkgver}-1"
 
   make DESTDIR="${pkgdir}" install
 
