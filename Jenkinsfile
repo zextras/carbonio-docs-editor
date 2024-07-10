@@ -60,7 +60,14 @@ pipeline {
                 sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
                 sh 'sudo mv *.list /etc/apt/sources.list.d/'
                 sh 'sudo mv theme /tmp'
-                sh 'sudo yap build ubuntu-focal .'
+                script {
+                    if (BRANCH_NAME == 'devel') {
+                        def timestamp = new Date().format('yyyyMMddHHmmss')
+                        sh "sudo yap build ubuntu-focal . -r ${timestamp}"
+                    } else {
+                        sh 'sudo yap build ubuntu-focal .'
+                    }
+                }
                 stash includes: 'artifacts/*focal*.deb',
                 name: 'artifacts-ubuntu-focal'
             }
@@ -92,7 +99,14 @@ pipeline {
                 sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
                 sh 'sudo mv *.list /etc/apt/sources.list.d/'
                 sh 'sudo mv theme /tmp'
-                sh 'sudo yap build ubuntu-jammy .'
+                script {
+                    if (BRANCH_NAME == 'devel') {
+                        def timestamp = new Date().format('yyyyMMddHHmmss')
+                        sh "sudo yap build ubuntu-jammy . -r ${timestamp}"
+                    } else {
+                        sh 'sudo yap build ubuntu-jammy .'
+                    }
+                }
                 stash includes: 'artifacts/*jammy*.deb',
                 name: 'artifacts-ubuntu-jammy'
             }
@@ -128,8 +142,15 @@ pipeline {
                         sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
                 }
                 sh 'sudo mv theme /tmp'
-                sh 'sudo yap build rocky-8 rpm-only'
-                sh 'sudo yap build rocky-8 .'
+                script {
+                    if (BRANCH_NAME == 'devel') {
+                        def timestamp = new Date().format('yyyyMMddHHmmss')
+                        sh "sudo yap build rocky-8 rpm-only -r ${timestamp}"
+                        sh "sudo yap build rocky-8 . -r ${timestamp}"
+                    } else {
+                        sh 'sudo yap build rocky-8 .'
+                    }
+                }
                 stash includes: 'artifacts/x86_64/*el8*.rpm',
                 name: 'artifacts-rocky-8'
             }
@@ -165,8 +186,15 @@ pipeline {
                         sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
                 }
                 sh 'sudo mv theme /tmp'
-                sh 'sudo yap build rocky-9 rpm-only'
-                sh 'sudo yap build rocky-9 .'
+                script {
+                    if (BRANCH_NAME == 'devel') {
+                        def timestamp = new Date().format('yyyyMMddHHmmss')
+                        sh "sudo yap build rocky-9 rpm-only -r ${timestamp}"
+                        sh "sudo yap build rocky-9 . -r ${timestamp}"
+                    } else {
+                        sh 'sudo yap build rocky-9 .'
+                    }
+                }
                 stash includes: 'artifacts/x86_64/*el9*.rpm',
                 name: 'artifacts-rocky-9'
             }
