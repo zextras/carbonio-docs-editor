@@ -24,6 +24,19 @@ depends__apt=(
   "python3-requests"
   "service-discover"
 )
+depends__ubuntu_noble=(
+  "carbonio-docs-core"
+  "carbonio-openssl"
+  "carbonio-poco"
+  "cpio"
+  "fontconfig"
+  "libcap2-bin"
+  "libpng16-16t64"
+  "libzstd1"
+  "pending-setups"
+  "python3-requests"
+  "service-discover"
+)
 makedepends__apt=(
   "autoconf"
   "automake"
@@ -148,6 +161,7 @@ build__apt() {
     --disable-debug-protocol \
     --disable-setcap \
     --disable-tests \
+    --disable-werror \
     --enable-ssl \
     --host=x86_64-linux-gnu \
     --localstatedir=/var \
