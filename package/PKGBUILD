@@ -369,4 +369,7 @@ postrm() {
   if [ -d /run/systemd/system ]; then
     systemctl daemon-reload >/dev/null 2>&1 || :
   fi
+  if [ -f /etc/zextras/service-discover/carbonio-docs-editor.hcl ]; then
+    rm -f /etc/zextras/service-discover/carbonio-docs-editor.hcl
+  fi
 }
