@@ -48,24 +48,21 @@ diff '--color=auto' -Naur a/browser/src/control/Toolbar.js b/browser/src/control
  			&& !command.startsWith('.uno:ToolbarMode') && !force) {
  			console.debug('Cannot execute: ' + command + ' when dialog is opened.');
 diff --git a/browser/src/main.js b/browser/src/main.js
-index 65351e1503..c1058c5cd6 100644
+index 65351e1503..97133778fd 100644
 --- a/browser/src/main.js
 +++ b/browser/src/main.js
-@@ -134,4 +134,16 @@ if (L.Browser.isInternetExplorer) {
+@@ -134,4 +134,13 @@ if (L.Browser.isInternetExplorer) {
  	map.uiManager.showInfoModal('browser-not-supported-modal', '', _('Warning! The browser you are using is not supported.'), '', _('OK'), null, false);
  }
 
-+var documentTitle = global.coolParams.get('title');
-+var baseURL = global.webserver;
++// Substitute the current URL with a public one to allow users to bookmark it
 +var publicEndpoint = decodeURIComponent(global.coolParams.get('public_url'));
 +
-+// Break the browser URL to avoid sharing user own token if the publicEndpoint is not present
-+publicEndpoint = publicEndpoint === '' ? documentTitle : publicEndpoint;
++// The replaceState does not work if the publicEndpoint is empty, use 0 as a fallback
++publicEndpoint = publicEndpoint === '' ? '0' : publicEndpoint;
 +
-+var finalURL = baseURL + '/services/' + publicEndpoint;
-+
-+window.history.replaceState('', documentTitle, finalURL);
-+document.title = documentTitle;
++var finalURL = window.location.origin + '/' + publicEndpoint;
++window.history.replaceState(null, '', finalURL);
 +
  }(window));
 diff '--color=auto' -Naur a/browser/src/map/Clipboard.js b/browser/src/map/Clipboard.js
