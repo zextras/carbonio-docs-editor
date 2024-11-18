@@ -1,6 +1,6 @@
 pkgname="carbonio-docs-editor"
 pkgver="23.05.12"
-pkgrel="1"
+pkgrel="2"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
 url="https://zextras.com"
