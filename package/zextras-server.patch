@@ -47,6 +47,24 @@ diff '--color=auto' -Naur a/browser/src/control/Toolbar.js b/browser/src/control
  		if ((this.dialog.hasOpenedDialog() || (this.jsdialog && this.jsdialog.hasDialogOpened()))
  			&& !command.startsWith('.uno:ToolbarMode') && !force) {
  			console.debug('Cannot execute: ' + command + ' when dialog is opened.');
+diff --git a/browser/src/main.js b/browser/src/main.js
+index 65351e1503..97133778fd 100644
+--- a/browser/src/main.js
++++ b/browser/src/main.js
+@@ -134,4 +134,13 @@ if (L.Browser.isInternetExplorer) {
+ 	map.uiManager.showInfoModal('browser-not-supported-modal', '', _('Warning! The browser you are using is not supported.'), '', _('OK'), null, false);
+ }
+
++// Substitute the current URL with a public one to allow users to bookmark it
++var publicEndpoint = decodeURIComponent(global.coolParams.get('public_url'));
++
++// The replaceState does not work if the publicEndpoint is empty, use 0 as a fallback
++publicEndpoint = publicEndpoint === '' ? '0' : publicEndpoint;
++
++var finalURL = window.location.origin + '/' + publicEndpoint;
++window.history.replaceState(null, '', finalURL);
++
+ }(window));
 diff '--color=auto' -Naur a/browser/src/map/Clipboard.js b/browser/src/map/Clipboard.js
 --- a/browser/src/map/Clipboard.js	2023-10-17 21:48:56.154360406 +0200
 +++ b/browser/src/map/Clipboard.js	2023-10-17 21:49:07.750876859 +0200

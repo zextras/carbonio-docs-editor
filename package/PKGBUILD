@@ -1,6 +1,6 @@
 pkgname="carbonio-docs-editor"
 pkgver="23.05.12"
-pkgrel="1"
+pkgrel="2"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
 url="https://zextras.com"
@@ -116,7 +116,7 @@ source=(
   "carbonio-docs-routes-generator.py"
 )
 sha256sums=('dc6e52dd7b8a0e5fdd40873a1340fc696b77a0ec15a4faa999fc8aa45a7bea5a'
-  '9fc24b307287065a53fac754f7775773068e8441877c56baf248fcad3b490e30'
+  'e394a51e4e48e7dec28b37b7d945a7590b21735f545f5977885f728ed8a64d02'
   'eb1673fe3a5d08cff7700bbae2eddb8fc172f857b299aeadbd191e87e007ce0b'
   'f7ebde2d9e4c7408f9cde0b074d733e12b90b0c0cd1ae09af0f2ba3de14b0583'
   '3ef83cc8c4571ca0508adf345bd55b398b7d4c5ef838bcccdd04ab500b88af1a'
