@@ -151,3 +151,17 @@ diff '--color=auto' -Naur a/wsd/COOLWSD.cpp b/wsd/COOLWSD.cpp
  
                              sendLoadResult(clientSession, true, "");
                          }
+diff --git a/wsd/DocumentBroker.cpp b/wsd/DocumentBroker.cpp
+index 26cb2a4083..8ce7eb481b 100644
+--- a/wsd/DocumentBroker.cpp
++++ b/wsd/DocumentBroker.cpp
+@@ -2497,8 +2497,8 @@ void DocumentBroker::handleUploadToStorageFailed(const StorageBase::UploadResult
+         // Make everyone readonly and tell everyone that the file is too large for the storage.
+         for (const auto& sessionIt : _sessions)
+         {
+-            sessionIt.second->sendTextFrameAndLogError("error: cmd=storage kind=savetoolarge");
+             sessionIt.second->setWritable(false);
++            sessionIt.second->sendTextFrameAndLogError("error: cmd=storage kind=savetoolarge");
+         }
+
+         broadcastSaveResult(false, "Too large", uploadResult.getReason());
