@@ -11,7 +11,7 @@ pipeline {
     }
     agent {
         node {
-            label 'base-agent-v1'
+            label 'base-agent-v2'
         }
     }
     environment {
@@ -21,21 +21,11 @@ pipeline {
         stage('Checkout & Stash') {
             agent {
                 node {
-                    label 'base-agent-v1'
+                    label 'base-agent-v2'
                 }
             }
             steps {
                 checkout scm
-                dir('theme') {
-                    checkout([$class: 'GitSCM',
-                          branches: [[name: '*/main']],
-                          userRemoteConfigs: [[credentialsId: 'jenkins-integration-with-github-account',
-                                               name: 'carbonio-docs-branding',
-                                               refspec: "refs/tags/23.05.12",
-                                               url: 'git@github.com:Zextras/carbonio-docs-branding.git'
-                                             ]]
-                         ])
-                }
                 script {
                     env.GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                 }
@@ -49,6 +39,9 @@ pipeline {
                 }
             }
             steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
+                    sh 'cp $KEY /root/.ssh/id_rsa'
+                }
                 unstash 'project'
                 withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
                     passwordVariable: 'SECRET',
@@ -62,7 +55,6 @@ pipeline {
                 sh 'sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243E584A21'
                 sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
                 sh 'sudo mv *.list /etc/apt/sources.list.d/'
-                sh 'sudo mv theme /tmp'
                 script {
                     if (BRANCH_NAME == 'devel') {
                         def timestamp = new Date().format('yyyyMMddHHmmss')
@@ -88,6 +80,9 @@ pipeline {
                 }
             }
             steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
+                    sh 'cp $KEY /root/.ssh/id_rsa'
+                }
                 unstash 'project'
                 withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
                     passwordVariable: 'SECRET',
@@ -101,7 +96,6 @@ pipeline {
                 sh 'sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243E584A21'
                 sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
                 sh 'sudo mv *.list /etc/apt/sources.list.d/'
-                sh 'sudo mv theme /tmp'
                 script {
                     if (BRANCH_NAME == 'devel') {
                         def timestamp = new Date().format('yyyyMMddHHmmss')
@@ -127,6 +121,9 @@ pipeline {
                 }
             }
             steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
+                    sh 'cp $KEY /root/.ssh/id_rsa'
+                }
                 unstash 'project'
                 withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
                     passwordVariable: 'SECRET',
@@ -140,7 +137,6 @@ pipeline {
                 sh 'sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243E584A21'
                 sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
                 sh 'sudo mv *.list /etc/apt/sources.list.d/'
-                sh 'sudo mv theme /tmp'
                 script {
                     if (BRANCH_NAME == 'devel') {
                         def timestamp = new Date().format('yyyyMMddHHmmss')
@@ -166,6 +162,9 @@ pipeline {
                 }
             }
             steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
+                    sh 'cp $KEY /root/.ssh/id_rsa'
+                }
                 unstash 'project'
                 withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted', 
                     passwordVariable: 'SECRET',
@@ -183,7 +182,6 @@ pipeline {
                         sh 'sudo mv *.repo /etc/yum.repos.d/'
                         sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
                 }
-                sh 'sudo mv theme /tmp'
                 script {
                     if (BRANCH_NAME == 'devel') {
                         def timestamp = new Date().format('yyyyMMddHHmmss')
@@ -210,6 +208,9 @@ pipeline {
                 }
             }
             steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
+                    sh 'cp $KEY /root/.ssh/id_rsa'
+                }
                 unstash 'project'
                 withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
                     passwordVariable: 'SECRET',
@@ -227,7 +228,6 @@ pipeline {
                         sh 'sudo mv *.repo /etc/yum.repos.d/'
                         sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
                 }
-                sh 'sudo mv theme /tmp'
                 script {
                     if (BRANCH_NAME == 'devel') {
                         def timestamp = new Date().format('yyyyMMddHHmmss')

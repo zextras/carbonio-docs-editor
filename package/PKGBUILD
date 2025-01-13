@@ -104,6 +104,7 @@ makedepends__yum=(
 )
 source=(
   "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-1.tar.gz"
+  "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=23.05.12"
   "zextras-server.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
@@ -116,6 +117,7 @@ source=(
   "carbonio-docs-routes-generator.py"
 )
 sha256sums=('dc6e52dd7b8a0e5fdd40873a1340fc696b77a0ec15a4faa999fc8aa45a7bea5a'
+  'SKIP'
   'eb8013bc552ebb29926a0920151a0bc2358e57e9857afc5c4fcfe89c8e76da4e'
   'eb1673fe3a5d08cff7700bbae2eddb8fc172f857b299aeadbd191e87e007ce0b'
   'f7ebde2d9e4c7408f9cde0b074d733e12b90b0c0cd1ae09af0f2ba3de14b0583'
@@ -167,7 +169,7 @@ build__apt() {
     --localstatedir=/var \
     --prefix=/opt/zextras/docs \
     --sysconfdir=/opt/zextras/docs/conf \
-    --with-app-branding=/tmp/theme/dist \
+    --with-app-branding=/tmp/branding/dist \
     --with-app-name="Carbonio Docs Editor" \
     --with-dictionaries="" \
     --with-lo-path=/opt/zextras/docs/core \
@@ -221,7 +223,7 @@ build__yum() {
     --localstatedir=/var \
     --prefix=/opt/zextras/docs \
     --sysconfdir=/opt/zextras/docs/conf \
-    --with-app-branding=/tmp/theme/dist \
+    --with-app-branding="${srcdir}/branding/dist" \
     --with-app-name="Carbonio Docs Editor" \
     --with-dictionaries="" \
     --with-lo-path=/opt/zextras/docs/core \
@@ -274,7 +276,7 @@ package() {
   install -Dm 644 "${srcdir}/carbonio-docs-routes-generator.py" \
     "${pkgdir}/usr/lib/carbonio-docs-routes-generator.py"
 
-  cp -r /tmp/theme/dist/* \
+  cp -r "${srcdir}/branding/dist/"* \
     "${pkgdir}/opt/zextras/docs/share/coolwsd/browser/dist"
   rm -rf "${pkgdir}/opt/zextras/docs/conf/apache2/"
   rm -rf "${pkgdir}/opt/zextras/docs/conf/nginx/"
