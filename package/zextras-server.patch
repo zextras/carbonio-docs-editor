@@ -1,7 +1,7 @@
 diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
---- a/browser/js/global.js	2023-10-17 21:48:56.107362382 +0200
-+++ b/browser/js/global.js	2023-10-17 21:49:07.750876859 +0200
-@@ -821,6 +821,16 @@
+--- a/browser/js/global.js	2025-02-11 17:03:23.465031759 +0100
++++ b/browser/js/global.js	2025-02-11 17:03:48.249895254 +0100
+@@ -1048,6 +1048,16 @@
  		global.docURL = filePath;
  	}
  
@@ -17,8 +17,8 @@ diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
 +
  	// Form a valid WS URL to the host with the given path.
  	global.makeWsUrl = function (path) {
- 		window.app.console.assert(global.host.startsWith('ws'), 'host is not ws: ' + global.host);
-@@ -848,7 +858,9 @@
+ 		global.app.console.assert(global.host.startsWith('ws'), 'host is not ws: ' + global.host);
+@@ -1075,7 +1085,9 @@
  		var encodedDocUrl = encodeURIComponent(docUrlParams) + suffix + wopiSrc;
  		if (global.hexifyUrl)
  			encodedDocUrl = global.hexEncode(encodedDocUrl);
@@ -30,9 +30,9 @@ diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
  
  	// Form a valid WS URL to the host with the given path and
 diff '--color=auto' -Naur a/browser/src/control/Toolbar.js b/browser/src/control/Toolbar.js
---- a/browser/src/control/Toolbar.js	2023-10-17 21:48:56.148360658 +0200
-+++ b/browser/src/control/Toolbar.js	2023-10-17 21:49:07.750876859 +0200
-@@ -394,6 +394,14 @@
+--- a/browser/src/control/Toolbar.js	2025-02-11 17:03:23.488607565 +0100
++++ b/browser/src/control/Toolbar.js	2025-02-11 17:03:48.250560016 +0100
+@@ -402,6 +402,14 @@
  
  		if (this.uiManager.isUIBlocked())
  			return;
@@ -47,14 +47,13 @@ diff '--color=auto' -Naur a/browser/src/control/Toolbar.js b/browser/src/control
  		if ((this.dialog.hasOpenedDialog() || (this.jsdialog && this.jsdialog.hasDialogOpened()))
  			&& !command.startsWith('.uno:ToolbarMode') && !force) {
  			console.debug('Cannot execute: ' + command + ' when dialog is opened.');
-diff --git a/browser/src/main.js b/browser/src/main.js
-index 65351e1503..97133778fd 100644
---- a/browser/src/main.js
-+++ b/browser/src/main.js
-@@ -134,4 +134,13 @@ if (L.Browser.isInternetExplorer) {
+diff '--color=auto' -Naur a/browser/src/main.js b/browser/src/main.js
+--- a/browser/src/main.js	2025-02-11 17:03:23.491574499 +0100
++++ b/browser/src/main.js	2025-02-11 17:03:48.250943919 +0100
+@@ -134,4 +134,13 @@
  	map.uiManager.showInfoModal('browser-not-supported-modal', '', _('Warning! The browser you are using is not supported.'), '', _('OK'), null, false);
  }
-
+ 
 +// Substitute the current URL with a public one to allow users to bookmark it
 +var publicEndpoint = decodeURIComponent(global.coolParams.get('public_url'));
 +
@@ -66,11 +65,11 @@ index 65351e1503..97133778fd 100644
 +
  }(window));
 diff '--color=auto' -Naur a/browser/src/map/Clipboard.js b/browser/src/map/Clipboard.js
---- a/browser/src/map/Clipboard.js	2023-10-17 21:48:56.154360406 +0200
-+++ b/browser/src/map/Clipboard.js	2023-10-17 21:49:07.750876859 +0200
-@@ -76,7 +76,8 @@
- 		if (!idx)
- 			idx = 0;
+--- a/browser/src/map/Clipboard.js	2025-02-11 17:03:23.491623537 +0100
++++ b/browser/src/map/Clipboard.js	2025-02-11 17:03:48.255358349 +0100
+@@ -95,7 +95,8 @@
+ 		if (this._accessKey[idx] === '')
+ 			return '';
  
 -		var metaPath = '/cool/clipboard?WOPISrc=' + encodeURIComponent(this._map.options.doc) +
 +		var serviceId = (window.serviceId) ? '?service_id=' + window.serviceId + '&' : '?';
@@ -79,9 +78,9 @@ diff '--color=auto' -Naur a/browser/src/map/Clipboard.js b/browser/src/map/Clipb
  			'&ViewId=' + this._map._docLayer._viewId +
  			'&Tag=' + this._accessKey[idx];
 diff '--color=auto' -Naur a/coolwsd-systemplate-setup b/coolwsd-systemplate-setup
---- a/coolwsd-systemplate-setup	2023-10-17 21:48:55.649381652 +0200
-+++ b/coolwsd-systemplate-setup	2023-10-17 21:49:07.748876941 +0200
-@@ -122,6 +122,7 @@
+--- a/coolwsd-systemplate-setup	2025-02-11 17:03:23.493831702 +0100
++++ b/coolwsd-systemplate-setup	2025-02-11 17:03:48.255718496 +0100
+@@ -130,6 +130,7 @@
  
  mkdir -p $LOCALBASE/share || exit 1
  ${CP} -r -p -L /${LOCALBASE}/share/fonts $LOCALBASE/share
@@ -90,9 +89,9 @@ diff '--color=auto' -Naur a/coolwsd-systemplate-setup b/coolwsd-systemplate-setu
  if [ -h $LOCALBASE/share/fonts/ghostscript ]; then
      mkdir $LOCALBASE/share/ghostscript || exit 1
 diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
---- a/coolwsd.xml.in	2023-10-17 21:48:55.649381652 +0200
-+++ b/coolwsd.xml.in	2023-10-17 21:49:07.748876941 +0200
-@@ -122,7 +122,7 @@
+--- a/coolwsd.xml.in	2025-02-11 17:03:23.493916856 +0100
++++ b/coolwsd.xml.in	2025-02-11 17:08:36.162439143 +0100
+@@ -123,7 +123,7 @@
           not here.
      -->
      <trace_event desc="The possibility to turn on generation of a Chrome Trace Event file" enable="false">
@@ -101,7 +100,7 @@ diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
      </trace_event>
  
      <browser_logging desc="Logging in the browser console" default="@BROWSER_LOGGING@">@BROWSER_LOGGING@</browser_logging>
-@@ -140,15 +140,16 @@
+@@ -141,15 +141,16 @@
      <net desc="Network settings">
        <!-- On systems where localhost resolves to IPv6 [::1] address first, when net.proto is all and net.listen is loopback, coolwsd unexpectedly listens on [::1] only.
             You need to change net.proto to IPv4, if you want to use 127.0.0.1. -->
@@ -121,12 +120,12 @@ diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
          <host desc="Ditto, but as IPv4-mapped IPv6 address">::ffff:127\.0\.0\.1</host>
          <host desc="The IPv6 loopback (localhost) address.">::1</host>
          <host desc="The IPv4 private 172.16.0.0/12 subnet part 1.">172\.1[6789]\.[0-9]{1,3}\.[0-9]{1,3}</host>
-@@ -170,12 +171,12 @@
+@@ -187,12 +188,12 @@
  
      <ssl desc="SSL settings">
          <!-- switches from https:// + wss:// to http:// + ws:// -->
 -        <enable type="bool" desc="Controls whether SSL encryption between coolwsd and the network is enabled (do not disable for production deployment). If default is false, must first be compiled with SSL support to enable." default="@ENABLE_SSL@">@ENABLE_SSL@</enable>
-+        <enable type="bool" desc="Controls whether SSL encryption between browser and coolwsd is enabled (do not disable for production deployment). If default is false, must first be compiled with SSL support to enable." default="true">false</enable>
++        <enable type="bool" desc="Controls whether SSL encryption between coolwsd and the network is enabled (do not disable for production deployment). If default is false, must first be compiled with SSL support to enable." default="true">false</enable>
          <!-- SSL off-load can be done in a proxy, if so disable SSL, and enable termination below in production -->
 -        <termination desc="Connection via proxy where coolwsd acts as working via https, but actually uses http." type="bool" default="true">false</termination>
 -        <cert_file_path desc="Path to the cert file" relative="false">/etc/coolwsd/cert.pem</cert_file_path>
@@ -136,13 +135,13 @@ diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
 +        <cert_file_path desc="Path to the cert file" relative="false"></cert_file_path>
 +        <key_file_path desc="Path to the key file" relative="false"></key_file_path>
 +        <ca_file_path desc="Path to the ca file" relative="false"></ca_file_path>
+         <ssl_verification desc="Enable or disable SSL verification of hosts remote to coolwsd. If true SSL verification will be strict, otherwise certs of hosts will not be verified. You may have to disable it in test environments with self-signed certificates." type="string" default="@SSL_VERIFY@">@SSL_VERIFY@</ssl_verification>
          <cipher_list desc="List of OpenSSL ciphers to accept" default="ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"></cipher_list>
          <hpkp desc="Enable HTTP Public key pinning" enable="false" report_only="false">
-             <max_age desc="HPKP's max-age directive - time in seconds browser should remember the pins" enable="true">1000</max_age>
 diff '--color=auto' -Naur a/wsd/COOLWSD.cpp b/wsd/COOLWSD.cpp
---- a/wsd/COOLWSD.cpp	2023-10-17 21:48:56.213357926 +0200
-+++ b/wsd/COOLWSD.cpp	2023-10-17 21:49:07.749876900 +0200
-@@ -4997,7 +4997,7 @@
+--- a/wsd/COOLWSD.cpp	2025-02-11 17:03:23.530217867 +0100
++++ b/wsd/COOLWSD.cpp	2025-02-11 17:03:48.256195682 +0100
+@@ -5486,7 +5486,7 @@
                              COOLWSD::checkDiskSpaceAndWarnClients(true);
                              // Users of development versions get just an info
                              // when reaching max documents or connections
@@ -151,11 +150,10 @@ diff '--color=auto' -Naur a/wsd/COOLWSD.cpp b/wsd/COOLWSD.cpp
  
                              sendLoadResult(clientSession, true, "");
                          }
-diff --git a/wsd/DocumentBroker.cpp b/wsd/DocumentBroker.cpp
-index 26cb2a4083..8ce7eb481b 100644
---- a/wsd/DocumentBroker.cpp
-+++ b/wsd/DocumentBroker.cpp
-@@ -2497,8 +2497,8 @@ void DocumentBroker::handleUploadToStorageFailed(const StorageBase::UploadResult
+diff '--color=auto' -Naur a/wsd/DocumentBroker.cpp b/wsd/DocumentBroker.cpp
+--- a/wsd/DocumentBroker.cpp	2025-02-11 17:03:23.530512491 +0100
++++ b/wsd/DocumentBroker.cpp	2025-02-11 17:03:48.258426423 +0100
+@@ -2090,8 +2090,8 @@
          // Make everyone readonly and tell everyone that the file is too large for the storage.
          for (const auto& sessionIt : _sessions)
          {
@@ -163,5 +161,5 @@ index 26cb2a4083..8ce7eb481b 100644
              sessionIt.second->setWritable(false);
 +            sessionIt.second->sendTextFrameAndLogError("error: cmd=storage kind=savetoolarge");
          }
-
+ 
          broadcastSaveResult(false, "Too large", uploadResult.getReason());

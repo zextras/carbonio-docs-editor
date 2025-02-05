@@ -1,6 +1,6 @@
 pkgname="carbonio-docs-editor"
-pkgver="23.05.12"
-pkgrel="2"
+pkgver="23.05.17"
+pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
 url="https://zextras.com"
@@ -116,9 +116,10 @@ source=(
   "service-protocol.json"
   "carbonio-docs-routes-generator.py"
 )
-sha256sums=('dc6e52dd7b8a0e5fdd40873a1340fc696b77a0ec15a4faa999fc8aa45a7bea5a'
+sha256sums=(
+  '4144cd7df42f04b9de693c2ef2965d3d9f584d9989525d4ed5be9e869516495d'
   'SKIP'
-  'eb8013bc552ebb29926a0920151a0bc2358e57e9857afc5c4fcfe89c8e76da4e'
+  '317ee13513e24a0be5bba7e5e6c6f66d4268a4c465d649671c0e428dca3338d9'
   'eb1673fe3a5d08cff7700bbae2eddb8fc172f857b299aeadbd191e87e007ce0b'
   'f7ebde2d9e4c7408f9cde0b074d733e12b90b0c0cd1ae09af0f2ba3de14b0583'
   '3ef83cc8c4571ca0508adf345bd55b398b7d4c5ef838bcccdd04ab500b88af1a'
@@ -127,7 +128,8 @@ sha256sums=('dc6e52dd7b8a0e5fdd40873a1340fc696b77a0ec15a4faa999fc8aa45a7bea5a'
   '5b5d9a3f770345b2793b01903f0af65298fdd581c8c072299efa603c92872271'
   'cce9a36e4e173901f54fe399f120da749054b98a377bcbd7f34b7b50457385c1'
   '5bad5690faa7d49fa2aabedae8e04a2492e9376759ab0643c797276d33d9197a'
-  '4ed722abedf4ab4dc0d25e86094ea583804121bdb4a2077113f743fbea47a30c')
+  '4ed722abedf4ab4dc0d25e86094ea583804121bdb4a2077113f743fbea47a30c'
+)
 
 build__apt() {
   cd "${srcdir}/online-cp-${pkgver}-1"
