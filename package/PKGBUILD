@@ -1,5 +1,5 @@
 pkgname="carbonio-docs-editor"
-pkgver="23.05.17"
+pkgver="23.05.19"
 pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
@@ -45,6 +45,7 @@ makedepends__apt=(
   "carbonio-openssl"
   "carbonio-poco"
   "cpio"
+  "dpkg-dev"
   "git"
   "libcap-dev"
   "libcap2-bin"
@@ -116,8 +117,7 @@ source=(
   "service-protocol.json"
   "carbonio-docs-routes-generator.py"
 )
-sha256sums=(
-  '4144cd7df42f04b9de693c2ef2965d3d9f584d9989525d4ed5be9e869516495d'
+sha256sums=('544ea746a08b8726c7ed82260d7ae2a8b42a4fd69d0c5eb6026c2ba7a3f83037'
   'SKIP'
   '317ee13513e24a0be5bba7e5e6c6f66d4268a4c465d649671c0e428dca3338d9'
   'eb1673fe3a5d08cff7700bbae2eddb8fc172f857b299aeadbd191e87e007ce0b'
@@ -128,10 +128,9 @@ sha256sums=(
   '5b5d9a3f770345b2793b01903f0af65298fdd581c8c072299efa603c92872271'
   'cce9a36e4e173901f54fe399f120da749054b98a377bcbd7f34b7b50457385c1'
   '5bad5690faa7d49fa2aabedae8e04a2492e9376759ab0643c797276d33d9197a'
-  '4ed722abedf4ab4dc0d25e86094ea583804121bdb4a2077113f743fbea47a30c'
-)
+  '4ed722abedf4ab4dc0d25e86094ea583804121bdb4a2077113f743fbea47a30c')
 
-build__apt() {
+build() {
   cd "${srcdir}/online-cp-${pkgver}-1"
 
   # Rebrand of static strings
@@ -155,6 +154,12 @@ build__apt() {
   sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2024, Zextras/g" \
     browser/html/cool.html.m4
 
+  export LDFLAGS="-Wl,-rpath,/opt/zextras/common/lib64 \
+    -Wl,-rpath,/opt/zextras/common/lib \
+    -L/opt/zextras/common/lib64 \
+    -L/opt/zextras/common/lib \
+    -L/usr/lib/x86_64-linux-gnu \
+    -L/usr/lib"
   export OPENSSL_CFLAGS="-I/opt/zextras/common/include"
   export OPENSSL_LIBS="-L/opt/zextras/common/lib"
 
@@ -180,61 +185,7 @@ build__apt() {
     --with-max-connections=10000 \
     --with-max-documents=10000 \
     --with-poco-includes=/opt/zextras/common/include \
-    --with-poco-libs=/opt/zextras/common/lib \
-    --with-user-id="${pkgname}"
-
-  make build-nocheck -j8
-}
-
-build__yum() {
-  cd "${srcdir}/online-cp-${pkgver}-1"
-
-  # Rebrand of static strings
-  sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
-    $(grep -iIr "Collabora Online Development Edition" . | cut -d":" -f1)
-
-  # Add zx spice
-  patch -Np1 -i "${srcdir}/zextras-server.patch"
-
-  # Disable unit-tests
-  sed -i "s/test cypress_test//" Makefile.am
-
-  # Force /opt/zextras/docs/conf path and inject some sane defaults
-  sed -Ei "s#COOLWSD_CONFIGDIR=.*#COOLWSD_CONFIGDIR=/opt/zextras/docs/conf#" configure.ac
-  sed -Ei "s#COOLWSD_LOGLEVEL=.*#COOLWSD_LOGLEVEL=information#" configure.ac
-  sed -Ei "s#COOLWSD_VERSION_HASH=.*#COOLWSD_VERSION_HASH=dist#" configure.ac
-  sed -Ei "s#COOLWSD_LOG_TO_FILE=.*#COOLWSD_LOG_TO_FILE=true#" configure.ac
-  sed -Ei "s#CLEANUP_COMMAND=.*#CLEANUP_COMMAND=true#" test/Makefile.am
-
-  # use Zextras and Collabora Copyright label in about dialog
-  sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2024, Zextras/g" \
-    browser/html/cool.html.m4
-
-  export OPENSSL_CFLAGS="-I/opt/zextras/common/include"
-  export OPENSSL_LIBS="-L/opt/zextras/common/lib"
-
-  ./autogen.sh
-  ./configure \
-    --build=x86_64-linux-gnu \
-    --disable-debug \
-    --disable-debug-protocol \
-    --disable-setcap \
-    --disable-tests \
-    --enable-ssl \
-    --host=x86_64-linux-gnu \
-    --localstatedir=/var \
-    --prefix=/opt/zextras/docs \
-    --sysconfdir=/opt/zextras/docs/conf \
-    --with-app-branding="${srcdir}/branding/dist" \
-    --with-app-name="Carbonio Docs Editor" \
-    --with-dictionaries="" \
-    --with-lo-path=/opt/zextras/docs/core \
-    --with-logfile=/opt/zextras/docs/log/docs-editor.log \
-    --with-lokit-path=/opt/zextras/common/include \
-    --with-max-connections=10000 \
-    --with-max-documents=10000 \
-    --with-poco-includes=/opt/zextras/common/include \
-    --with-poco-libs=/opt/zextras/common/lib64 \
+    --with-poco-libs="/opt/zextras/common/lib64 -L/opt/zextras/common/lib" \
     --with-user-id="${pkgname}"
 
   make build-nocheck -j8
@@ -298,8 +249,8 @@ postinst__apt() {
       setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
 
       id -u carbonio-docs-editor >/dev/null 2>&1 || adduser --quiet --system --group --home /opt/zextras/docs/ carbonio-docs-editor 2>/dev/null
-      mkdir -p /var/cache/carbonio-docs-server &&
-        chown carbonio-docs-editor: /var/cache/carbonio-docs-editor
+      mkdir -p /var/cache/carbonio-docs-server \
+        && chown carbonio-docs-editor: /var/cache/carbonio-docs-editor
       rm -rf /var/cache/coolwsd/*
       chown carbonio-docs-editor: -R /opt/zextras/docs/conf/
       chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu
@@ -340,8 +291,8 @@ postinst__yum() {
   setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
 
   id -u carbonio-docs-editor >/dev/null 2>&1 || adduser --system -U -d /opt/zextras/docs/ carbonio-docs-editor 2>/dev/null
-  mkdir -p /var/cache/carbonio-docs-server &&
-    chown carbonio-docs-editor: /var/cache/carbonio-docs-editor
+  mkdir -p /var/cache/carbonio-docs-server \
+    && chown carbonio-docs-editor: /var/cache/carbonio-docs-editor
   rm -rf /var/cache/coolwsd/*
   chown carbonio-docs-editor: -R /opt/zextras/docs/conf/
   chmod 644 /opt/zextras/docs/conf/coolkitconfig.xcu

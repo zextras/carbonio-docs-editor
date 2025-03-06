@@ -11,7 +11,7 @@ pipeline {
     }
     agent {
         node {
-            label 'base-agent-v2'
+            label 'base'
         }
     }
     environment {
@@ -19,11 +19,6 @@ pipeline {
     }
     stages {
         stage('Checkout & Stash') {
-            agent {
-                node {
-                    label 'base-agent-v2'
-                }
-            }
             steps {
                 checkout scm
                 script {
@@ -35,36 +30,35 @@ pipeline {
         stage('Ubuntu 20') {
             agent {
                 node {
-                    label 'yap-agent-ubuntu-20.04-v2'
+                    label 'yap-ubuntu-20-v1'
                 }
             }
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
-                    sh 'cp $KEY /root/.ssh/id_rsa'
-                }
-                unstash 'project'
-                withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
-                    passwordVariable: 'SECRET',
-                    usernameVariable: 'USERNAME')]) {
-                        sh 'echo "machine zextras.jfrog.io" >> auth.conf'
-                        sh 'echo "login $USERNAME" >> auth.conf'
-                        sh 'echo "password $SECRET" >> auth.conf'
-                        sh 'sudo mv auth.conf /etc/apt'
-                }
-                sh 'echo "deb https://zextras.jfrog.io/artifactory/ubuntu-rc focal main" > zextras.list'
-                sh 'sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243E584A21'
-                sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
-                sh 'sudo mv *.list /etc/apt/sources.list.d/'
-                script {
-                    if (BRANCH_NAME == 'devel') {
-                        def timestamp = new Date().format('yyyyMMddHHmmss')
-                        sh "sudo yap build ubuntu-focal . -r ${timestamp}"
-                    } else {
-                        sh 'sudo yap build ubuntu-focal .'
+                container('yap') {
+                    unstash 'project'
+                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
+                        passwordVariable: 'SECRET',
+                        usernameVariable: 'USERNAME')]) {
+                            sh 'echo "machine zextras.jfrog.io" >> auth.conf'
+                            sh 'echo "login $USERNAME" >> auth.conf'
+                            sh 'echo "password $SECRET" >> auth.conf'
+                            sh 'sudo mv auth.conf /etc/apt'
                     }
+                    sh 'echo "deb [trusted=yes] https://zextras.jfrog.io/artifactory/ubuntu-devel focal main" > zextras.list'
+                    sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
+                    sh 'sudo mv *.list /etc/apt/sources.list.d/'
+                    script {
+                        sh 'sudo yap prepare ubuntu-focal'
+                        if (BRANCH_NAME == 'devel') {
+                            def timestamp = new Date().format('yyyyMMddHHmmss')
+                            sh "sudo yap build ubuntu-focal . -r ${timestamp}"
+                        } else {
+                            sh 'sudo yap build ubuntu-focal .'
+                        }
+                    }
+                    stash includes: 'artifacts/*focal*.deb',
+                    name: 'artifacts-ubuntu-focal'
                 }
-                stash includes: 'artifacts/*focal*.deb',
-                name: 'artifacts-ubuntu-focal'
             }
             post {
                 always {
@@ -76,36 +70,36 @@ pipeline {
         stage('Ubuntu 22') {
             agent {
                 node {
-                    label 'yap-agent-ubuntu-22.04-v2'
+                    label 'yap-ubuntu-22-v1'
                 }
             }
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
-                    sh 'cp $KEY /root/.ssh/id_rsa'
-                }
-                unstash 'project'
-                withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
-                    passwordVariable: 'SECRET',
-                    usernameVariable: 'USERNAME')]) {
-                        sh 'echo "machine zextras.jfrog.io" >> auth.conf'
-                        sh 'echo "login $USERNAME" >> auth.conf'
-                        sh 'echo "password $SECRET" >> auth.conf'
-                        sh 'sudo mv auth.conf /etc/apt'
-                }
-                sh 'echo "deb https://zextras.jfrog.io/artifactory/ubuntu-rc jammy main" > zextras.list'
-                sh 'sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243E584A21'
-                sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
-                sh 'sudo mv *.list /etc/apt/sources.list.d/'
-                script {
-                    if (BRANCH_NAME == 'devel') {
-                        def timestamp = new Date().format('yyyyMMddHHmmss')
-                        sh "sudo yap build ubuntu-jammy . -r ${timestamp}"
-                    } else {
-                        sh 'sudo yap build ubuntu-jammy .'
+                container('yap') {
+                    unstash 'project'
+                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
+                        passwordVariable: 'SECRET',
+                        usernameVariable: 'USERNAME')]) {
+                            sh 'echo "machine zextras.jfrog.io" >> auth.conf'
+                            sh 'echo "login $USERNAME" >> auth.conf'
+                            sh 'echo "password $SECRET" >> auth.conf'
+                            sh 'sudo mv auth.conf /etc/apt'
                     }
+                    sh 'echo "deb [trusted=yes] https://zextras.jfrog.io/artifactory/ubuntu-devel jammy main" > zextras.list'
+                    sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
+                    sh 'sudo mv *.list /etc/apt/sources.list.d/'
+                    script {
+                        sh 'sudo yap prepare ubuntu-jammy'
+                        if (BRANCH_NAME == 'devel') {
+                            def timestamp = new Date().format('yyyyMMddHHmmss')
+                            sh "sudo yap build ubuntu-jammy . -r ${timestamp}"
+                        } else {
+                            sh 'sudo yap build ubuntu-jammy .'
+                        }
+                    }
+                    stash includes: 'artifacts/*jammy*.deb',
+                    name: 'artifacts-ubuntu-jammy'
                 }
-                stash includes: 'artifacts/*jammy*.deb',
-                name: 'artifacts-ubuntu-jammy'
+
             }
             post {
                 always {
@@ -117,36 +111,35 @@ pipeline {
         stage('Ubuntu 24') {
             agent {
                 node {
-                    label 'yap-agent-ubuntu-24.04-v2'
+                    label 'yap-ubuntu-24-v1'
                 }
             }
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
-                    sh 'cp $KEY /root/.ssh/id_rsa'
-                }
-                unstash 'project'
-                withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
-                    passwordVariable: 'SECRET',
-                    usernameVariable: 'USERNAME')]) {
-                        sh 'echo "machine zextras.jfrog.io" >> auth.conf'
-                        sh 'echo "login $USERNAME" >> auth.conf'
-                        sh 'echo "password $SECRET" >> auth.conf'
-                        sh 'sudo mv auth.conf /etc/apt'
-                }
-                sh 'echo "deb https://zextras.jfrog.io/artifactory/ubuntu-devel noble main" > zextras.list'
-                sh 'sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 52FD40243E584A21'
-                sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
-                sh 'sudo mv *.list /etc/apt/sources.list.d/'
-                script {
-                    if (BRANCH_NAME == 'devel') {
-                        def timestamp = new Date().format('yyyyMMddHHmmss')
-                        sh "sudo yap build ubuntu-noble . -r ${timestamp}"
-                    } else {
-                        sh 'sudo yap build ubuntu-noble .'
+                container('yap') {
+                    unstash 'project'
+                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
+                        passwordVariable: 'SECRET',
+                        usernameVariable: 'USERNAME')]) {
+                            sh 'echo "machine zextras.jfrog.io" >> auth.conf'
+                            sh 'echo "login $USERNAME" >> auth.conf'
+                            sh 'echo "password $SECRET" >> auth.conf'
+                            sh 'sudo mv auth.conf /etc/apt'
                     }
+                    sh 'echo "deb [trusted=yes] https://zextras.jfrog.io/artifactory/ubuntu-devel noble main" > zextras.list'
+                    sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
+                    sh 'sudo mv *.list /etc/apt/sources.list.d/'
+                    script {
+                        sh 'sudo yap prepare ubuntu-noble'
+                        if (BRANCH_NAME == 'devel') {
+                            def timestamp = new Date().format('yyyyMMddHHmmss')
+                            sh "sudo yap build ubuntu-noble . -r ${timestamp}"
+                        } else {
+                            sh 'sudo yap build ubuntu-noble .'
+                        }
+                    }
+                    stash includes: 'artifacts/*noble*.deb',
+                    name: 'artifacts-ubuntu-noble'
                 }
-                stash includes: 'artifacts/*noble*.deb',
-                name: 'artifacts-ubuntu-noble'
             }
             post {
                 always {
@@ -158,45 +151,44 @@ pipeline {
         stage('Rocky 8') {
             agent {
                 node {
-                    label 'yap-agent-rocky-8-v2'
+                    label 'yap-rocky-8-v1'
                 }
             }
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
-                    sh 'cp $KEY /root/.ssh/id_rsa'
-                }
-                unstash 'project'
-                withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted', 
-                    passwordVariable: 'SECRET',
-                    usernameVariable: 'USERNAME')]) {
-                        sh 'echo "[Zextras]" > zextras.repo'
-                        sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-rc/" >> zextras.repo'
-                        sh 'echo "enabled=1" >> zextras.repo'
-                        sh 'echo "gpgcheck=0" >> zextras.repo'
-                        sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-rc/repomd.xml.key" >> zextras.repo'
-
-                        sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
-                        sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
-                        sh 'echo "enabled=1" >> nodesource-nodistro.repo'
-                        sh 'echo "gpgcheck=0" >> nodesource-nodistro.repo'
-                        sh 'sudo mv *.repo /etc/yum.repos.d/'
-                        sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
-                }
-                script {
-                    if (BRANCH_NAME == 'devel') {
-                        def timestamp = new Date().format('yyyyMMddHHmmss')
-                        sh "sudo yap build rocky-8 rpm-only -r ${timestamp}"
-                        sh "sudo yap build rocky-8 . -r ${timestamp}"
-                    } else {
-                        sh 'sudo yap build rocky-8 .'
+                container('yap') {
+                    unstash 'project'
+                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
+                        passwordVariable: 'SECRET',
+                        usernameVariable: 'USERNAME')]) {
+                            sh 'echo "[Zextras]" > zextras.repo'
+                            sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-devel/" >> zextras.repo'
+                            sh 'echo "enabled=1" >> zextras.repo'
+                            sh 'echo "gpgcheck=0" >> zextras.repo'
+                            sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-devel/repomd.xml.key" >> zextras.repo'
+                            sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
+                            sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
+                            sh 'echo "enabled=1" >> nodesource-nodistro.repo'
+                            sh 'echo "gpgcheck=0" >> nodesource-nodistro.repo'
+                            sh 'sudo mv *.repo /etc/yum.repos.d/'
+                            sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
                     }
+                    script {
+                        sh 'sudo yap prepare rocky-8'
+                        if (BRANCH_NAME == 'devel') {
+                            def timestamp = new Date().format('yyyyMMddHHmmss')
+                            sh "sudo yap build rocky-8 rpm-only -r ${timestamp}"
+                            sh "sudo yap build rocky-8 . -r ${timestamp}"
+                        } else {
+                            sh 'sudo yap build rocky-8 .'
+                        }
+                    }
+                    stash includes: 'artifacts/*el8*.rpm',
+                    name: 'artifacts-rocky-8'
                 }
-                stash includes: 'artifacts/x86_64/*el8*.rpm',
-                name: 'artifacts-rocky-8'
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'artifacts/x86_64/*el8*.rpm',
+                    archiveArtifacts artifacts: 'artifacts/*el8*.rpm',
                     fingerprint: true
                 }
             }
@@ -204,45 +196,44 @@ pipeline {
         stage('Rocky 9') {
             agent {
                 node {
-                    label 'yap-agent-rocky-9-v2'
+                    label 'yap-rocky-9-v1'
                 }
             }
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'tarsier_bot-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'KEY_USR')]) {
-                    sh 'cp $KEY /root/.ssh/id_rsa'
-                }
-                unstash 'project'
-                withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
-                    passwordVariable: 'SECRET',
-                    usernameVariable: 'USERNAME')]) {
-                        sh 'echo "[Zextras]" > zextras.repo'
-                        sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-rc/" >> zextras.repo'
-                        sh 'echo "enabled=1" >> zextras.repo'
-                        sh 'echo "gpgcheck=0" >> zextras.repo'
-                        sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-rc/repomd.xml.key" >> zextras.repo'
-                        sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
-
-                        sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
-                        sh 'echo "enabled=1" >> nodesource-nodistro.repo'
-                        sh 'echo "gpgcheck=0" >> nodesource-nodistro.repo'
-                        sh 'sudo mv *.repo /etc/yum.repos.d/'
-                        sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
-                }
-                script {
-                    if (BRANCH_NAME == 'devel') {
-                        def timestamp = new Date().format('yyyyMMddHHmmss')
-                        sh "sudo yap build rocky-9 rpm-only -r ${timestamp}"
-                        sh "sudo yap build rocky-9 . -r ${timestamp}"
-                    } else {
-                        sh 'sudo yap build rocky-9 .'
+                container('yap') {
+                    unstash 'project'
+                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
+                        passwordVariable: 'SECRET',
+                        usernameVariable: 'USERNAME')]) {
+                            sh 'echo "[Zextras]" > zextras.repo'
+                            sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-devel/" >> zextras.repo'
+                            sh 'echo "enabled=1" >> zextras.repo'
+                            sh 'echo "gpgcheck=0" >> zextras.repo'
+                            sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-devel/repomd.xml.key" >> zextras.repo'
+                            sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
+                            sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
+                            sh 'echo "enabled=1" >> nodesource-nodistro.repo'
+                            sh 'echo "gpgcheck=0" >> nodesource-nodistro.repo'
+                            sh 'sudo mv *.repo /etc/yum.repos.d/'
+                            sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
                     }
+                    script {
+                        sh 'sudo yap prepare rocky-9'
+                        if (BRANCH_NAME == 'devel') {
+                            def timestamp = new Date().format('yyyyMMddHHmmss')
+                            sh "sudo yap build rocky-9 rpm-only -r ${timestamp}"
+                            sh "sudo yap build rocky-9 . -r ${timestamp}"
+                        } else {
+                            sh 'sudo yap build rocky-9 .'
+                        }
+                    }
+                    stash includes: 'artifacts/*el9*.rpm',
+                    name: 'artifacts-rocky-9'
                 }
-                stash includes: 'artifacts/x86_64/*el9*.rpm',
-                name: 'artifacts-rocky-9'
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'artifacts/x86_64/*el9*.rpm',
+                    archiveArtifacts artifacts: 'artifacts/*el9*.rpm',
                     fingerprint: true
                 }
             }
@@ -283,12 +274,12 @@ pipeline {
                                 "props": "deb.distribution=noble;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
                             },
                             {
-                                "pattern": "artifacts/x86_64/(carbonio-docs-editor)-(*).el8.x86_64.rpm",
+                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el8.x86_64.rpm",
                                 "target": "centos8-playground/zextras/{1}/{1}-{2}.el8.x86_64.rpm",
                                 "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
                             },
                             {
-                                "pattern": "artifacts/x86_64/(carbonio-docs-editor)-(*).el9.x86_64.rpm",
+                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el9.x86_64.rpm",
                                 "target": "rhel9-playground/zextras/{1}/{1}-{2}.el9.x86_64.rpm",
                                 "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
                             }
@@ -332,12 +323,12 @@ pipeline {
                                 "props": "deb.distribution=noble;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
                             },
                             {
-                                "pattern": "artifacts/x86_64/(carbonio-docs-editor)-(*).el8.x86_64.rpm",
+                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el8.x86_64.rpm",
                                 "target": "centos8-devel/zextras/{1}/{1}-{2}.el8.x86_64.rpm",
                                 "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
                             },
                             {
-                                "pattern": "artifacts/x86_64/(carbonio-docs-editor)-(*).el9.x86_64.rpm",
+                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el9.x86_64.rpm",
                                 "target": "rhel9-devel/zextras/{1}/{1}-{2}.el9.x86_64.rpm",
                                 "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
                             }
@@ -407,7 +398,7 @@ pipeline {
                     uploadSpec= """{
                         "files": [
                             {
-                                "pattern": "artifacts/x86_64/(carbonio-docs-editor)-(*).el8.x86_64.rpm",
+                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el8.x86_64.rpm",
                                 "target": "centos8-rc/zextras/{1}/{1}-{2}.el8.x86_64.rpm",
                                 "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
                             }
@@ -434,7 +425,7 @@ pipeline {
                     uploadSpec= """{
                         "files": [
                             {
-                                "pattern": "artifacts/x86_64/(carbonio-docs-editor)-(*).el9.x86_64.rpm",
+                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el9.x86_64.rpm",
                                 "target": "rhel9-rc/zextras/{1}/{1}-{2}.el9.x86_64.rpm",
                                 "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
                             }
@@ -459,4 +450,3 @@ pipeline {
         }
     }
 }
-
