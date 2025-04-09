@@ -4,7 +4,7 @@ diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
 @@ -1048,6 +1048,16 @@
  		global.docURL = filePath;
  	}
- 
+
 +	global.decodeServiceId = function (docUrlParams) {
 +		var params = docUrlParams.split('?')[1].split('&');
 +		var serviceId = params.find(function (param) {
@@ -27,7 +27,7 @@ diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
 +		var serviceId = (window.serviceId) ?'&service_id=' + window.serviceId : '';
 +		return root + encodedDocUrl + '/ws' + serviceId;
  	};
- 
+
  	// Form a valid WS URL to the host with the given path and
 diff '--color=auto' -Naur a/browser/src/control/Toolbar.js b/browser/src/control/Toolbar.js
 --- a/browser/src/control/Toolbar.js	2025-02-11 17:03:23.488607565 +0100
@@ -47,6 +47,28 @@ diff '--color=auto' -Naur a/browser/src/control/Toolbar.js b/browser/src/control
  		if ((this.dialog.hasOpenedDialog() || (this.jsdialog && this.jsdialog.hasDialogOpened()))
  			&& !command.startsWith('.uno:ToolbarMode') && !force) {
  			console.debug('Cannot execute: ' + command + ' when dialog is opened.');
+diff -Naur original/browser/src/core/Socket.js modified/browser/src/core/Socket.js
+--- original/browser/src/core/Socket.js	2025-04-10 19:22:35.437973317 +0200
++++ modified/browser/src/core/Socket.js	2025-04-11 18:05:41.475208423 +0200
+@@ -44,7 +44,17 @@
+ 	},
+
+ 	getWebSocketBaseURI: function(map) {
+-		return window.makeWsUrlWopiSrc('/cool/', map.options.doc + '?' + $.param(map.options.docParams));
++		var docUrl = map.options.doc;
++		var docParams = $.param(map.options.docParams);
++
++		// Avoid double "?" by checking for existing query params, because split on "?" doesn't split for encoded url
++		// (useful when constructing websocket url for password-protected documents)
++		var separator = docUrl.includes('?') ? '&' : '?';
++
++		return window.makeWsUrlWopiSrc(
++			'/cool/',
++			docUrl + (docParams ? separator + docParams : '')
++		);
+ 	},
+
+ 	connect: function(socket) {
 diff '--color=auto' -Naur a/browser/src/main.js b/browser/src/main.js
 --- a/browser/src/main.js	2025-02-11 17:03:23.491574499 +0100
 +++ b/browser/src/main.js	2025-02-11 17:03:48.250943919 +0100
