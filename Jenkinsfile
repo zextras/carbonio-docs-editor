@@ -15,7 +15,7 @@ pipeline {
         }
     }
     environment {
-        NODE_MAJOR = '18'
+        NODE_MAJOR = '20'
     }
     stages {
         stage('Checkout & Stash') {
@@ -25,46 +25,6 @@ pipeline {
                     env.GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                 }
                 stash includes: '**', name: 'project'
-            }
-        }
-        stage('Ubuntu 20') {
-            agent {
-                node {
-                    label 'yap-ubuntu-20-v1'
-                }
-            }
-            steps {
-                container('yap') {
-                    unstash 'project'
-                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
-                        passwordVariable: 'SECRET',
-                        usernameVariable: 'USERNAME')]) {
-                            sh 'echo "machine zextras.jfrog.io" >> auth.conf'
-                            sh 'echo "login $USERNAME" >> auth.conf'
-                            sh 'echo "password $SECRET" >> auth.conf'
-                            sh 'sudo mv auth.conf /etc/apt'
-                    }
-                    sh 'echo "deb [trusted=yes] https://zextras.jfrog.io/artifactory/ubuntu-devel focal main" > zextras.list'
-                    sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
-                    sh 'sudo mv *.list /etc/apt/sources.list.d/'
-                    script {
-                        sh 'sudo yap prepare ubuntu-focal'
-                        if (BRANCH_NAME == 'devel') {
-                            def timestamp = new Date().format('yyyyMMddHHmmss')
-                            sh "sudo yap build ubuntu-focal . -r ${timestamp}"
-                        } else {
-                            sh 'sudo yap build ubuntu-focal .'
-                        }
-                    }
-                    stash includes: 'artifacts/*focal*.deb',
-                    name: 'artifacts-ubuntu-focal'
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'artifacts/*focal*.deb',
-                    fingerprint: true
-                }
             }
         }
         stage('Ubuntu 22') {
@@ -161,11 +121,13 @@ pipeline {
                         passwordVariable: 'SECRET',
                         usernameVariable: 'USERNAME')]) {
                             sh 'echo "[Zextras]" > zextras.repo'
+                            sh 'echo "name=Zextras" >> zextras.repo'
                             sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-devel/" >> zextras.repo'
                             sh 'echo "enabled=1" >> zextras.repo'
                             sh 'echo "gpgcheck=0" >> zextras.repo'
                             sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-devel/repomd.xml.key" >> zextras.repo'
                             sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
+                            sh 'echo "name=NodeSource" >> nodesource-nodistro.repo'
                             sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
                             sh 'echo "enabled=1" >> nodesource-nodistro.repo'
                             sh 'echo "gpgcheck=0" >> nodesource-nodistro.repo'
@@ -206,11 +168,13 @@ pipeline {
                         passwordVariable: 'SECRET',
                         usernameVariable: 'USERNAME')]) {
                             sh 'echo "[Zextras]" > zextras.repo'
+                            sh 'echo "name=Zextras" >> zextras.repo'
                             sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-devel/" >> zextras.repo'
                             sh 'echo "enabled=1" >> zextras.repo'
                             sh 'echo "gpgcheck=0" >> zextras.repo'
                             sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-devel/repomd.xml.key" >> zextras.repo'
                             sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
+                            sh 'echo "name=NodeSource" >> nodesource-nodistro.repo'
                             sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
                             sh 'echo "enabled=1" >> nodesource-nodistro.repo'
                             sh 'echo "gpgcheck=0" >> nodesource-nodistro.repo'
@@ -245,7 +209,6 @@ pipeline {
                 }
             }
             steps {
-                unstash 'artifacts-ubuntu-focal'
                 unstash 'artifacts-ubuntu-jammy'
                 unstash 'artifacts-ubuntu-noble'
                 unstash 'artifacts-rocky-8'
@@ -258,11 +221,6 @@ pipeline {
                     buildInfo = Artifactory.newBuildInfo()
                     uploadSpec = """{
                         "files": [
-                            {
-                                "pattern": "artifacts/*focal*.deb",
-                                "target": "ubuntu-playground/pool/",
-                                "props": "deb.distribution=focal;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
-                            },
                             {
                                 "pattern": "artifacts/*jammy*.deb",
                                 "target": "ubuntu-playground/pool/",
@@ -294,7 +252,6 @@ pipeline {
                 branch 'devel'
             }
             steps {
-                unstash 'artifacts-ubuntu-focal'
                 unstash 'artifacts-ubuntu-jammy'
                 unstash 'artifacts-ubuntu-noble'
                 unstash 'artifacts-rocky-8'
@@ -307,11 +264,6 @@ pipeline {
                     buildInfo = Artifactory.newBuildInfo()
                     uploadSpec = """{
                         "files": [
-                            {
-                                "pattern": "artifacts/*focal*.deb",
-                                "target": "ubuntu-devel/pool/",
-                                "props": "deb.distribution=focal;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
-                            },
                             {
                                 "pattern": "artifacts/*jammy*.deb",
                                 "target": "ubuntu-devel/pool/",
@@ -343,7 +295,6 @@ pipeline {
                 buildingTag()
             }
             steps {
-                unstash 'artifacts-ubuntu-focal'
                 unstash 'artifacts-ubuntu-jammy'
                 unstash 'artifacts-ubuntu-noble'
                 unstash 'artifacts-rocky-8'
@@ -360,11 +311,6 @@ pipeline {
                     buildInfo.name += "-ubuntu"
                     uploadSpec = """{
                         "files": [
-                            {
-                                "pattern": "artifacts/*focal*.deb",
-                                "target": "ubuntu-rc/pool/",
-                                "props": "deb.distribution=focal;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
-                            },
                             {
                                 "pattern": "artifacts/*jammy*.deb",
                                 "target": "ubuntu-rc/pool/",

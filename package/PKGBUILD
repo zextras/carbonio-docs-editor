@@ -1,5 +1,5 @@
 pkgname="carbonio-docs-editor"
-pkgver="23.05.19"
+pkgver="25.04.3"
 pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
@@ -44,6 +44,7 @@ makedepends__apt=(
   "carbonio-docs-core"
   "carbonio-openssl"
   "carbonio-poco"
+  "clang"
   "cpio"
   "dpkg-dev"
   "git"
@@ -55,6 +56,7 @@ makedepends__apt=(
   "libpng-dev"
   "libtool"
   "libzstd-dev"
+  "llvm"
   "m4"
   "make"
   "nodejs"
@@ -82,6 +84,7 @@ makedepends__yum=(
   "carbonio-docs-core"
   "carbonio-openssl"
   "carbonio-poco"
+  "clang"
   "cpio"
   "cppunit-devel"
   "cups-devel"
@@ -95,6 +98,7 @@ makedepends__yum=(
   "libtool"
   "libxslt"
   "libzstd-devel"
+  "llvm"
   "nodejs"
   "pam-devel"
   "pcre-devel"
@@ -104,8 +108,8 @@ makedepends__yum=(
   "rsync"
 )
 source=(
-  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-1.tar.gz"
-  "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=23.05.12"
+  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
+  "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=25.04.3"
   "zextras-server.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
@@ -117,9 +121,9 @@ source=(
   "service-protocol.json"
   "carbonio-docs-routes-generator.py"
 )
-sha256sums=('544ea746a08b8726c7ed82260d7ae2a8b42a4fd69d0c5eb6026c2ba7a3f83037'
+sha256sums=('9793df2d582bd0b7eab7f81372253e80f85a11dcb27ac0fd0d073aec104629db'
   'SKIP'
-  '32012355e9c3cffba868f0f43929507f95702046b32499e0419c753d4c1b19d1'
+  '7b8c8b14f091bd6d9c278a557658bccf1c2b3aa96f910f679b2fb2b81d0c66b9'
   'eb1673fe3a5d08cff7700bbae2eddb8fc172f857b299aeadbd191e87e007ce0b'
   'f7ebde2d9e4c7408f9cde0b074d733e12b90b0c0cd1ae09af0f2ba3de14b0583'
   '3ef83cc8c4571ca0508adf345bd55b398b7d4c5ef838bcccdd04ab500b88af1a'
@@ -131,7 +135,7 @@ sha256sums=('544ea746a08b8726c7ed82260d7ae2a8b42a4fd69d0c5eb6026c2ba7a3f83037'
   '4ed722abedf4ab4dc0d25e86094ea583804121bdb4a2077113f743fbea47a30c')
 
 build() {
-  cd "${srcdir}/online-cp-${pkgver}-1"
+  cd "${srcdir}/online-cp-${pkgver}-2"
 
   # Rebrand of static strings
   sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
@@ -151,7 +155,7 @@ build() {
   sed -Ei "s#CLEANUP_COMMAND=.*#CLEANUP_COMMAND=true#" test/Makefile.am
 
   # use Zextras and Collabora Copyright label in about dialog
-  sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2024, Zextras/g" \
+  sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2025, Zextras/g" \
     browser/html/cool.html.m4
 
   export LDFLAGS="-Wl,-rpath,/opt/zextras/common/lib64 \
@@ -163,12 +167,14 @@ build() {
   export OPENSSL_CFLAGS="-I/opt/zextras/common/include"
   export OPENSSL_LIBS="-L/opt/zextras/common/lib"
 
+  export CC="clang -pthread"
+  export CXX="clang++ -pthread"
+
   ./autogen.sh
   ./configure \
     --build=x86_64-linux-gnu \
     --disable-debug \
     --disable-debug-protocol \
-    --disable-setcap \
     --disable-tests \
     --disable-werror \
     --enable-ssl \
@@ -192,7 +198,7 @@ build() {
 }
 
 package() {
-  cd "${srcdir}/online-cp-${pkgver}-1"
+  cd "${srcdir}/online-cp-${pkgver}-2"
 
   make DESTDIR="${pkgdir}" install
 
@@ -214,19 +220,19 @@ package() {
   install -Dm755 "${srcdir}/${pkgname}-template.hcl" \
     "${pkgdir}/etc/zextras/service-discover/templates/${pkgname}-template.hcl"
 
-  install -Dm 644 "${srcdir}/${pkgname}-setup.sh" \
+  install -Dm644 "${srcdir}/${pkgname}-setup.sh" \
     "${pkgdir}/etc/zextras/pending-setups.d/${pkgname}.sh"
 
-  install -Dm 644 "${srcdir}/intentions.json" \
+  install -Dm644 "${srcdir}/intentions.json" \
     "${pkgdir}/etc/carbonio/docs-editor/service-discover/intentions.json"
 
-  install -Dm 644 "${srcdir}/policies.json" \
+  install -Dm644 "${srcdir}/policies.json" \
     "${pkgdir}/etc/carbonio/docs-editor/service-discover/policies.json"
 
-  install -Dm 644 "${srcdir}/service-protocol.json" \
+  install -Dm644 "${srcdir}/service-protocol.json" \
     "${pkgdir}/etc/carbonio/docs-editor/service-discover/service-protocol.json"
 
-  install -Dm 644 "${srcdir}/carbonio-docs-routes-generator.py" \
+  install -Dm644 "${srcdir}/carbonio-docs-routes-generator.py" \
     "${pkgdir}/usr/lib/carbonio-docs-routes-generator.py"
 
   cp -r "${srcdir}/branding/dist/"* \
@@ -245,7 +251,7 @@ preinst() {
 postinst__apt() {
   case "$1" in
     configure)
-      setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit
+      setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit-caps
       setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
 
       id -u carbonio-docs-editor >/dev/null 2>&1 || adduser --quiet --system --group --home /opt/zextras/docs/ carbonio-docs-editor 2>/dev/null
@@ -287,7 +293,7 @@ postinst__apt() {
 }
 
 postinst__yum() {
-  setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit
+  setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /opt/zextras/docs/bin/coolforkit-caps
   setcap cap_sys_admin=ep /opt/zextras/docs/bin/coolmount
 
   id -u carbonio-docs-editor >/dev/null 2>&1 || adduser --system -U -d /opt/zextras/docs/ carbonio-docs-editor 2>/dev/null
