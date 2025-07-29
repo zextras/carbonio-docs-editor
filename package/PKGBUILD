@@ -111,6 +111,7 @@ source=(
   "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
   "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=25.04.3"
   "zextras-server.patch"
+  "collabora_debug_logs.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
   "${pkgname}.service"
@@ -124,6 +125,7 @@ source=(
 sha256sums=('9793df2d582bd0b7eab7f81372253e80f85a11dcb27ac0fd0d073aec104629db'
   'SKIP'
   '7b8c8b14f091bd6d9c278a557658bccf1c2b3aa96f910f679b2fb2b81d0c66b9'
+  'SKIP'
   'eb1673fe3a5d08cff7700bbae2eddb8fc172f857b299aeadbd191e87e007ce0b'
   'f7ebde2d9e4c7408f9cde0b074d733e12b90b0c0cd1ae09af0f2ba3de14b0583'
   '3ef83cc8c4571ca0508adf345bd55b398b7d4c5ef838bcccdd04ab500b88af1a'
@@ -143,6 +145,9 @@ build() {
 
   # Add zx spice
   patch -Np1 -i "${srcdir}/zextras-server.patch"
+
+  # DEBUG logs
+  patch -Np1 -i "${srcdir}/collabora_debug_logs.patch"
 
   # Disable unit-tests
   sed -i "s/test cypress_test//" Makefile.am
