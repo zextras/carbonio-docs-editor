@@ -44,8 +44,19 @@ diff -Naur original/common/Authorization.cpp modified/common/Authorization.cpp
  
 diff -Naur original/wsd/RequestDetails.cpp modified/wsd/RequestDetails.cpp
 --- original/wsd/RequestDetails.cpp	2025-07-02 07:23:17.000000000 +0200
-+++ modified/wsd/RequestDetails.cpp	2025-07-29 10:38:00.581692033 +0200
-@@ -292,6 +292,10 @@
++++ modified/wsd/RequestDetails.cpp	2025-07-29 15:24:26.330365794 +0200
+@@ -109,7 +109,9 @@
+     std::string wopiSrcWithOptions = decodedWopiSrc;
+     if (!options.empty())
+     {
+-        wopiSrcWithOptions += '?';
++        // FIX: check if url already contains GET parameters, if so we don't want to append another "?" to it while adding
++        // access token related parameters...
++        wopiSrcWithOptions += (decodedWopiSrc.find('?') != std::string::npos) ? '&' : '?';
+     }
+ 
+     for (const std::string& option : options)
+@@ -292,6 +294,10 @@
      uriPublic.setQueryParameters(queryParams);
  
      LOG_DBG("Sanitized URI [" << uri << "] to [" << uriPublic.toString() << ']');
