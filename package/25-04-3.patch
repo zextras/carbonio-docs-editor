@@ -1,0 +1,314 @@
+diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/control/Control.Menubar.ts
+--- original/browser/src/control/Control.Menubar.ts	2025-07-02 07:23:17.000000000 +0200
++++ modified/browser/src/control/Control.Menubar.ts	2025-07-30 15:09:27.134031686 +0200
+@@ -468,7 +468,6 @@
+ 				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
+ 				{name: _('About'), id: 'about', type: 'action'}]
+ 			},
+-			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
+ 		],
+
+ 		presentation: [
+@@ -644,7 +643,6 @@
+ 				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
+ 				{name: _('About'), id: 'about', type: 'action'}]
+ 			},
+-			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
+ 		],
+
+ 		drawing: [
+@@ -781,7 +779,6 @@
+ 				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
+ 				{name: _('About'), id: 'about', type: 'action'}]
+ 			},
+-			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
+ 		],
+
+ 		spreadsheet: [
+@@ -1071,7 +1068,6 @@
+ 				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
+ 				{name: _('About'), id: 'about', type: 'action'}]
+ 			},
+-			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
+ 		],
+
+ 		mobiletext:  [
+@@ -1480,7 +1476,6 @@
+ 	private _hiddenItems: string[] = [];
+ 	private _menubarCont: HTMLElement | null = null;
+ 	private _isFileODF: boolean = true;
+-	private lastModIndicator: HTMLElement | null = null;
+ 	private _map: any;
+
+ 	/**
+@@ -1514,8 +1509,6 @@
+ 		map.on('addmenu', this._addMenu, this);
+ 		map.on('languagesupdated', this._onInitLanguagesMenu, this);
+ 		map.on('updatetoolbarcommandvalues', this._onStyleMenu, this);
+-		map.on('initmodificationindicator', this._onInitModificationIndicator, this);
+-		map.on('updatemodificationindicator', this._onUpdateModificationIndicator, this);
+ 	}
+
+ 	/**
+@@ -1528,8 +1521,6 @@
+ 		this._map.off('addmenu', this._addMenu, this);
+ 		this._map.off('languagesupdated', this._onInitLanguagesMenu, this);
+ 		this._map.off('updatetoolbarcommandvalues', this._onStyleMenu, this);
+-		this._map.off('initmodificationindicator', this._onInitModificationIndicator, this);
+-		this._map.off('updatemodificationindicator', this._onUpdateModificationIndicator, this);
+ 		app.events.off('updatepermission', this._onRefresh);
+
+ 		this._menubarCont?.remove();
+@@ -2934,47 +2925,6 @@
+ 		}
+ 		return null;
+ 	}
+-
+-	/**
+-	 * Initializes the modification indicator in the menubar.
+-	 * @param lastmodtime - The last modification time.
+-	 */
+-	private _onInitModificationIndicator(lastmodtime: any): void {
+-		var lastModButton = L.DomUtil.get('menu-last-mod');
+-		if (lastModButton !== null && lastModButton !== undefined
+-			&& lastModButton.firstChild
+-			&& lastModButton.firstChild.innerHTML !== null
+-			&& lastModButton.firstChild.childElementCount == 0) {
+-			if (lastmodtime == null) {
+-				// No modification time -> hide the indicator
+-				L.DomUtil.setStyle(lastModButton, 'display', 'none');
+-				return;
+-			}
+-			var mainSpan = document.createElement('span');
+-			this.lastModIndicator = document.createElement('span');
+-			mainSpan.appendChild(this.lastModIndicator);
+-
+-			// Replace menu button body with new content
+-			lastModButton.firstChild.replaceChildren();
+-			lastModButton.firstChild.appendChild(mainSpan);
+-
+-			if (L.Params.revHistoryEnabled) {
+-				L.DomUtil.setStyle(lastModButton, 'cursor', 'pointer');
+-			}
+-
+-			this._map.fire('modificationindicatorinitialized');
+-		}
+-	}
+-
+-	/**
+-       * Updates the modification indicator.
+-       * @param e - Event data containing the new modification time.
+-       */
+-	private _onUpdateModificationIndicator(e: any): void {
+-		if (this.lastModIndicator !== null && this.lastModIndicator !== undefined) {
+-			this.lastModIndicator.textContent = e.lastSaved;
+-		}
+-	}
+ }
+
+ L.control.menubar = () => {
+diff -Naur original/browser/src/map/Map.js modified/browser/src/map/Map.js
+--- original/browser/src/map/Map.js	2025-07-02 07:23:17.000000000 +0200
++++ modified/browser/src/map/Map.js	2025-07-30 15:11:11.667928504 +0200
+@@ -150,10 +150,6 @@
+ 			}
+ 		});
+
+-		this.on('modificationindicatorinitialized', function() {
+-			this._modIndicatorInitialized = true;
+-		});
+-
+ 		// When all these conditions are met, fire statusindicator:initializationcomplete
+ 		this.initConditions = {
+ 			'doclayerinit': false,
+@@ -245,9 +241,6 @@
+ 		// after we receive status for the first time.
+ 		this._docLoadedOnce = false;
+
+-		//Last modified time of document saved state
+-		this._lastModDateValue = '';
+-
+ 		this.on('commandstatechanged', function(e) {
+ 			if (e.commandName === '.uno:ModifiedStatus') {
+ 				this._everModified = this._everModified || (e.state === 'true');
+@@ -299,9 +292,6 @@
+ 					commentSection.clearList();
+ 			}
+
+-			if (!window.mode.isMobile())
+-				this.initializeModificationIndicator();
+-
+ 			// Show sidebar.
+ 			if (this._docLayer && !this._docLoadedOnce) {
+ 				// Let the first page finish loading then load the sidebar.
+@@ -470,64 +460,6 @@
+ 		}
+ 	},
+
+-	initializeModificationIndicator: function() {
+-		this.fire('initmodificationindicator', this._lastmodtime);
+-		this.updateModificationIndicator(this._lastmodtime);
+-	},
+-
+-	updateModificationIndicator: function(newModificationTime) {
+-		var timeout;
+-
+-		if (typeof newModificationTime === 'string') {
+-			this._lastmodtime = newModificationTime;
+-		}
+-
+-		clearTimeout(this._modTimeout);
+-
+-		if (this._modIndicatorInitialized && this._lastmodtime) {
+-			var dateTime = new Date(this._lastmodtime.replace(/,.*/, 'Z'));
+-			var dateValue;
+-
+-			var elapsed = Date.now() - dateTime;
+-			var rtf1 = new Intl.RelativeTimeFormat(String.locale, { style: 'narrow' });
+-			if (('minSavedMessageTimeoutSecs' in window) && (elapsed < (window.minSavedMessageTimeoutSecs * 1000))) {
+-				timeout = window.minSavedMessageTimeoutSecs * 1000;
+-				dateValue = '';
+-			} else if (elapsed < 60000) {
+-				dateValue = _('Last saved:') + ' ' + rtf1.format(-Math.round(elapsed / 1000), 'second');
+-				timeout = 6000;
+-			} else if (elapsed < 3600000) {
+-				dateValue = _('Last saved:') + ' ' + rtf1.format(-Math.round(elapsed / 60000), 'minute');
+-				timeout = 60000;
+-			} else if (elapsed < 3600000 * 24) {
+-				dateValue = _('Last saved:') + ' ' + rtf1.format(-Math.round(elapsed / 3600000), 'hour');
+-				timeout = 60000;
+-			} else {
+-				dateValue = _('Last saved:') + ' ' + dateTime.toLocaleDateString(String.locale,
+-					{ year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+-				timeout = 60000;
+-			}
+-
+-			this.fire('updatemodificationindicator', {lastSaved: dateValue});
+-
+-			if (timeout) {
+-				this._modTimeout = setTimeout(L.bind(this.updateModificationIndicator, this, -1), timeout);
+-			}
+-		}
+-		if (this.lastModIndicator !== null && this.lastModIndicator !== undefined)
+-			this.lastModIndicator.innerHTML = dateValue;
+-		this.setLastModDateValue(dateValue);
+-		this._modTimeout = setTimeout(L.bind(this.updateModificationIndicator, this, -1), timeout);
+-	},
+-
+-	setLastModDateValue: function(dateValue) {
+-		this._lastModDateValue = dateValue;
+-	},
+-
+-	getLastModDateValue: function() {
+-		return this._lastModDateValue;
+-	},
+-
+ 	showBusy: function(label, bar) {
+ 		if (window.ThisIsTheAndroidApp)
+ 			return;
+diff -Naur original/common/Authorization.cpp modified/common/Authorization.cpp
+--- original/common/Authorization.cpp	2025-07-02 07:23:17.000000000 +0200
++++ modified/common/Authorization.cpp	2025-07-29 11:18:57.729391862 +0200
+@@ -23,21 +23,40 @@
+ {
+     if (_type == Authorization::Type::Token)
+     {
++        LOG_DBG("Authorization::authorizeURI - START");
++        LOG_DBG("Authorization::authorizeURI - Input URI: [" << uri.toString() << "]");
++        LOG_DBG("Authorization::authorizeURI - Input Path: [" << uri.getPath() << "]");
++        LOG_DBG("Authorization::authorizeURI - Input Query: [" << uri.getQuery() << "]");
++        LOG_DBG("Authorization::authorizeURI - Token to add: [" << _data << "]");
++
+         static const std::string key("access_token");
+ 
+         Poco::URI::QueryParameters queryParams = uri.getQueryParameters();
++        LOG_DBG("Authorization::authorizeURI - Number of existing params: " << queryParams.size());
++
+         for (auto& param: queryParams)
+         {
++            LOG_DBG("Authorization::authorizeURI - Existing param: [" << param.first << "] = [" << param.second << "]");
+             if (param.first == key)
+             {
++                LOG_DBG("Authorization::authorizeURI - Found existing access_token, updating it");
+                 param.second = _data;
+                 uri.setQueryParameters(queryParams);
++                LOG_DBG("Authorization::authorizeURI - After update URI: [" << uri.toString() << "]");
++                LOG_DBG("Authorization::authorizeURI - After update Query: [" << uri.getQuery() << "]");
+                 return;
+             }
+         }
+ 
+         // it did not exist yet
++        LOG_DBG("Authorization::authorizeURI - access_token not found, adding it");
++        LOG_DBG("Authorization::authorizeURI - Before addQueryParameter - Query: [" << uri.getQuery() << "]");
++
+         uri.addQueryParameter(key, _data);
++
++        LOG_DBG("Authorization::authorizeURI - After addQueryParameter - URI: [" << uri.toString() << "]");
++        LOG_DBG("Authorization::authorizeURI - After addQueryParameter - Query: [" << uri.getQuery() << "]");
++        LOG_DBG("Authorization::authorizeURI - END");
+     }
+ }
+ 
+diff -Naur original/wsd/RequestDetails.cpp modified/wsd/RequestDetails.cpp
+--- original/wsd/RequestDetails.cpp	2025-07-02 07:23:17.000000000 +0200
++++ modified/wsd/RequestDetails.cpp	2025-07-29 15:24:26.330365794 +0200
+@@ -109,7 +109,9 @@
+     std::string wopiSrcWithOptions = decodedWopiSrc;
+     if (!options.empty())
+     {
+-        wopiSrcWithOptions += '?';
++        // FIX: check if url already contains GET parameters, if so we don't want to append another "?" to it while adding
++        // access token related parameters...
++        wopiSrcWithOptions += (decodedWopiSrc.find('?') != std::string::npos) ? '&' : '?';
+     }
+ 
+     for (const std::string& option : options)
+@@ -292,6 +294,10 @@
+     uriPublic.setQueryParameters(queryParams);
+ 
+     LOG_DBG("Sanitized URI [" << uri << "] to [" << uriPublic.toString() << ']');
++
++    LOG_DBG("RequestDetails::sanitizeURI - Input URI: [" << uri << "]");
++    LOG_DBG("RequestDetails::sanitizeURI - Decoded URI: [" << Uri::decode(uri) << "]");
++    LOG_DBG("RequestDetails::sanitizeURI - Final query string: [" << uriPublic.getQuery() << "]");
+     return uriPublic;
+ }
+ 
+diff -Naur original/wsd/wopi/CheckFileInfo.cpp modified/wsd/wopi/CheckFileInfo.cpp
+--- original/wsd/wopi/CheckFileInfo.cpp	2025-07-02 07:23:17.000000000 +0200
++++ modified/wsd/wopi/CheckFileInfo.cpp	2025-07-29 10:37:32.054958036 +0200
+@@ -33,6 +33,10 @@
+     Authorization auth = Authorization::create(_url);
+     http::Request httpRequest = StorageConnectionManager::createHttpRequest(_url, auth);
+ 
++    LOG_DBG("CheckFileInfo::checkFileInfo - Original URL: [" << _url.toString() << "]");
++    LOG_DBG("CheckFileInfo::checkFileInfo - URL path: [" << _url.getPath() << "], query: [" << _url.getQuery() << "]");
++    LOG_DBG("CheckFileInfo::checkFileInfo - HTTP Request URI: [" << httpRequest.getUrl() << "]");
++
+     const auto startTime = std::chrono::steady_clock::now();
+ 
+     LOG_TRC("WOPI::CheckFileInfo request header for URI [" << uriAnonym << "]:\n"
+diff -Naur original/wsd/wopi/StorageConnectionManager.cpp modified/wsd/wopi/StorageConnectionManager.cpp
+--- original/wsd/wopi/StorageConnectionManager.cpp	2025-07-02 07:23:17.000000000 +0200
++++ modified/wsd/wopi/StorageConnectionManager.cpp	2025-07-29 10:40:21.368115361 +0200
+@@ -110,6 +110,8 @@
+         addWopiProof(request, uri, it->second);
+ 
+     // Helps wrt. debugging cluster cases from the logs
++    LOG_DBG("initHttpRequest - URI toString: [" << uri.toString() << "]");
++    LOG_DBG("initHttpRequest - URI path: [" << uri.getPath() << "], query: [" << uri.getQuery() << "]");
+     request.set("X-COOL-WOPI-ServerId", Util::getProcessIdentifier());
+ }
+ 
+@@ -130,6 +132,10 @@
+         httpRequest.header().set(pair.first, pair.second);
+     }
+ 
++    LOG_DBG("StorageConnectionManager::createHttpRequest - Input URI: [" << uri.toString() << "]");
++    LOG_DBG("StorageConnectionManager::createHttpRequest - Path and Query: [" << uri.getPathAndQuery() << "]");
++    LOG_DBG("StorageConnectionManager::createHttpRequest - HTTP Request URL: [" << httpRequest.getUrl() << "]");
++
+     return httpRequest;
+ }
+ 

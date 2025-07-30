@@ -111,7 +111,7 @@ source=(
   "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
   "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=25.04.3"
   "zextras-server.patch"
-  "collabora_debug_logs.patch"
+  "25-04-3.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
   "${pkgname}.service"
@@ -146,8 +146,8 @@ build() {
   # Add zx spice
   patch -Np1 -i "${srcdir}/zextras-server.patch"
 
-  # DEBUG logs
-  patch -Np1 -i "${srcdir}/collabora_debug_logs.patch"
+  # Backend patch (no longer assumes base url is without get parameters and removed broken last modification https://github.com/CollaboraOnline/online/issues/11050)
+  patch -Np1 -i "${srcdir}/25-04-3.patch"
 
   # Disable unit-tests
   sed -i "s/test cypress_test//" Makefile.am
