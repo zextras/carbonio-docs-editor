@@ -1,3 +1,15 @@
+diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/control/Control.Menubar.ts
+--- original/browser/src/control/Control.Menubar.ts	2025-07-02 07:23:17.000000000 +0200
++++ modified/browser/src/control/Control.Menubar.ts	2025-07-30 11:18:07.939285434 +0200
+@@ -2972,7 +2972,7 @@
+        */
+ 	private _onUpdateModificationIndicator(e: any): void {
+ 		if (this.lastModIndicator !== null && this.lastModIndicator !== undefined) {
+-			this.lastModIndicator.textContent = e.lastSaved;
++			this.lastModIndicator.textContent = e.target._lastModDateValue; //e.lastSaved is undefined here, use this instead
+ 		}
+ 	}
+ }
 diff -Naur original/common/Authorization.cpp modified/common/Authorization.cpp
 --- original/common/Authorization.cpp	2025-07-02 07:23:17.000000000 +0200
 +++ modified/common/Authorization.cpp	2025-07-29 11:18:57.729391862 +0200
