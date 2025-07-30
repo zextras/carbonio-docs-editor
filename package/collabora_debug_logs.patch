@@ -1,12 +1,32 @@
 diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/control/Control.Menubar.ts
 --- original/browser/src/control/Control.Menubar.ts	2025-07-02 07:23:17.000000000 +0200
-+++ modified/browser/src/control/Control.Menubar.ts	2025-07-30 11:18:07.939285434 +0200
-@@ -2972,7 +2972,7 @@
++++ modified/browser/src/control/Control.Menubar.ts	2025-07-30 14:42:18.286532335 +0200
+@@ -2950,14 +2950,7 @@
+ 				L.DomUtil.setStyle(lastModButton, 'display', 'none');
+ 				return;
+ 			}
+-			var mainSpan = document.createElement('span');
+-			this.lastModIndicator = document.createElement('span');
+-			mainSpan.appendChild(this.lastModIndicator);
+-
+-			// Replace menu button body with new content
+-			lastModButton.firstChild.replaceChildren();
+-			lastModButton.firstChild.appendChild(mainSpan);
+-
++			this.lastModIndicator = lastModButton.firstChild as HTMLElement;
+ 			if (L.Params.revHistoryEnabled) {
+ 				L.DomUtil.setStyle(lastModButton, 'cursor', 'pointer');
+ 			}
+@@ -2971,8 +2964,10 @@
+        * @param e - Event data containing the new modification time.
         */
  	private _onUpdateModificationIndicator(e: any): void {
- 		if (this.lastModIndicator !== null && this.lastModIndicator !== undefined) {
+-		if (this.lastModIndicator !== null && this.lastModIndicator !== undefined) {
 -			this.lastModIndicator.textContent = e.lastSaved;
-+			this.lastModIndicator.textContent = e.target._lastModDateValue; //e.lastSaved is undefined here, use this instead
++		// search for element again, could be unloaded for some reason
++		const lastModButton = L.DomUtil.get('menu-last-mod');
++		if (lastModButton && lastModButton.firstChild) {
++			lastModButton.firstChild.textContent = e.target._lastModDateValue || 'Last saved: unknown';
  		}
  	}
  }
