@@ -6,18 +6,15 @@ After=network-online.target
 PartOf=carbonio.target
 
 [Service]
-Type=simple
+User=carbonio-docs-editor
 ExecStart=/usr/bin/consul connect envoy \
     -token-file /etc/carbonio/docs-editor/service-discover/token \
     -admin-bind localhost:0 \
     -sidecar-for carbonio-docs-editor
 Restart=on-failure
 RestartSec=15
-User=carbonio-docs-editor
-KillMode=process
-KillSignal=SIGKILL
+KillSignal=SIGINT
 LimitNOFILE=65536
-TimeoutSec=120
-TimeoutStopSec=120
+
 [Install]
 WantedBy=multi-user.target
