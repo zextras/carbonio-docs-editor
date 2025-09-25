@@ -1,397 +1,142 @@
+library(
+    identifier: 'jenkins-packages-build-library@1.0.4',
+    retriever: modernSCM([
+        $class: 'GitSCMSource',
+        remote: 'git@github.com:zextras/jenkins-packages-build-library.git',
+        credentialsId: 'jenkins-integration-with-github-account'
+    ])
+)
+
 pipeline {
-    parameters {
-        booleanParam defaultValue: false,
-        description: 'Whether to upload the packages in playground repositories',
-        name: 'PLAYGROUND'
-    }
-    options {
-        skipDefaultCheckout()
-        buildDiscarder(logRotator(numToKeepStr: '5'))
-        timeout(time: 1, unit: 'HOURS')
-    }
     agent {
         node {
             label 'base'
         }
     }
+
     environment {
         NODE_MAJOR = '20'
     }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        skipDefaultCheckout()
+        timeout(time: 1, unit: 'HOURS')
+    }
+
+    parameters {
+        booleanParam defaultValue: false,
+            description: 'Whether to upload the packages in playground repositories',
+            name: 'PLAYGROUND'
+    }
+
+    tools {
+        jfrog 'jfrog-cli'
+    }
+
     stages {
         stage('Checkout & Stash') {
             steps {
                 checkout scm
                 script {
-                    env.GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    gitMetadata()
                 }
-                stash includes: '**', name: 'project'
             }
         }
-        stage('Ubuntu 22') {
-            agent {
-                node {
-                    label 'yap-ubuntu-22-v1'
-                }
-            }
+
+        stage('Build deb/rpm') {
             steps {
-                container('yap') {
-                    unstash 'project'
-                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
+                echo 'Building deb/rpm packages'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
                         passwordVariable: 'SECRET',
-                        usernameVariable: 'USERNAME')]) {
-                            sh 'echo "machine zextras.jfrog.io" >> auth.conf'
-                            sh 'echo "login $USERNAME" >> auth.conf'
-                            sh 'echo "password $SECRET" >> auth.conf'
-                            sh 'sudo mv auth.conf /etc/apt'
-                    }
-                    sh 'echo "deb [trusted=yes] https://zextras.jfrog.io/artifactory/ubuntu-devel jammy main" > zextras.list'
-                    sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
-                    sh 'sudo mv *.list /etc/apt/sources.list.d/'
+                        usernameVariable: 'USERNAME'
+                    )
+                ]) {
                     script {
-                        sh 'sudo yap prepare ubuntu-jammy'
-                        if (BRANCH_NAME == 'devel') {
-                            def timestamp = new Date().format('yyyyMMddHHmmss')
-                            sh "sudo yap build ubuntu-jammy . -r ${timestamp}"
-                        } else {
-                            sh 'sudo yap build ubuntu-jammy .'
-                        }
+                        env.REPO_ENV = env.GIT_TAG ? 'rc' : 'devel'
                     }
-                    stash includes: 'artifacts/*jammy*.deb',
-                    name: 'artifacts-ubuntu-jammy'
-                }
 
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'artifacts/*jammy*.deb',
-                    fingerprint: true
-                }
-            }
-        }
-        stage('Ubuntu 24') {
-            agent {
-                node {
-                    label 'yap-ubuntu-24-v1'
-                }
-            }
-            steps {
-                container('yap') {
-                    unstash 'project'
-                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
-                        passwordVariable: 'SECRET',
-                        usernameVariable: 'USERNAME')]) {
-                            sh 'echo "machine zextras.jfrog.io" >> auth.conf'
-                            sh 'echo "login $USERNAME" >> auth.conf'
-                            sh 'echo "password $SECRET" >> auth.conf'
-                            sh 'sudo mv auth.conf /etc/apt'
-                    }
-                    sh 'echo "deb [trusted=yes] https://zextras.jfrog.io/artifactory/ubuntu-devel noble main" > zextras.list'
-                    sh 'echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list'
-                    sh 'sudo mv *.list /etc/apt/sources.list.d/'
-                    script {
-                        sh 'sudo yap prepare ubuntu-noble'
-                        if (BRANCH_NAME == 'devel') {
-                            def timestamp = new Date().format('yyyyMMddHHmmss')
-                            sh "sudo yap build ubuntu-noble . -r ${timestamp}"
-                        } else {
-                            sh 'sudo yap build ubuntu-noble .'
-                        }
-                    }
-                    stash includes: 'artifacts/*noble*.deb',
-                    name: 'artifacts-ubuntu-noble'
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'artifacts/*noble*.deb',
-                    fingerprint: true
-                }
-            }
-        }
-        stage('Rocky 8') {
-            agent {
-                node {
-                    label 'yap-rocky-8-v1'
-                }
-            }
-            steps {
-                container('yap') {
-                    unstash 'project'
-                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
-                        passwordVariable: 'SECRET',
-                        usernameVariable: 'USERNAME')]) {
-                            sh 'echo "[Zextras]" > zextras.repo'
-                            sh 'echo "name=Zextras" >> zextras.repo'
-                            sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-devel/" >> zextras.repo'
-                            sh 'echo "enabled=1" >> zextras.repo'
-                            sh 'echo "gpgcheck=0" >> zextras.repo'
-                            sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-devel/repomd.xml.key" >> zextras.repo'
-                            sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
-                            sh 'echo "name=NodeSource" >> nodesource-nodistro.repo'
-                            sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
-                            sh 'echo "enabled=1" >> nodesource-nodistro.repo'
-                            sh 'echo "gpgcheck=0" >> nodesource-nodistro.repo'
-                            sh 'sudo mv *.repo /etc/yum.repos.d/'
-                            sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
-                    }
-                    script {
-                        sh 'sudo yap prepare rocky-8'
-                        if (BRANCH_NAME == 'devel') {
-                            def timestamp = new Date().format('yyyyMMddHHmmss')
-                            sh "sudo yap build rocky-8 rpm-only -r ${timestamp}"
-                            sh "sudo yap build rocky-8 . -r ${timestamp}"
-                        } else {
-                            sh 'sudo yap build rocky-8 .'
-                        }
-                    }
-                    stash includes: 'artifacts/*el8*.rpm',
-                    name: 'artifacts-rocky-8'
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'artifacts/*el8*.rpm',
-                    fingerprint: true
-                }
-            }
-        }
-        stage('Rocky 9') {
-            agent {
-                node {
-                    label 'yap-rocky-9-v1'
-                }
-            }
-            steps {
-                container('yap') {
-                    unstash 'project'
-                    withCredentials([usernamePassword(credentialsId: 'artifactory-jenkins-gradle-properties-splitted',
-                        passwordVariable: 'SECRET',
-                        usernameVariable: 'USERNAME')]) {
-                            sh 'echo "[Zextras]" > zextras.repo'
-                            sh 'echo "name=Zextras" >> zextras.repo'
-                            sh 'echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-devel/" >> zextras.repo'
-                            sh 'echo "enabled=1" >> zextras.repo'
-                            sh 'echo "gpgcheck=0" >> zextras.repo'
-                            sh 'echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-devel/repomd.xml.key" >> zextras.repo'
-                            sh 'echo "[nodesource-nodejs]" > nodesource-nodistro.repo'
-                            sh 'echo "name=NodeSource" >> nodesource-nodistro.repo'
-                            sh 'echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo'
-                            sh 'echo "enabled=1" >> nodesource-nodistro.repo'
-                            sh 'echo "gpgcheck=0" >> nodesource-nodistro.repo'
-                            sh 'sudo mv *.repo /etc/yum.repos.d/'
-                            sh 'sudo dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
-                    }
-                    script {
-                        sh 'sudo yap prepare rocky-9'
-                        if (BRANCH_NAME == 'devel') {
-                            def timestamp = new Date().format('yyyyMMddHHmmss')
-                            sh "sudo yap build rocky-9 rpm-only -r ${timestamp}"
-                            sh "sudo yap build rocky-9 . -r ${timestamp}"
-                        } else {
-                            sh 'sudo yap build rocky-9 .'
-                        }
-                    }
-                    stash includes: 'artifacts/*el9*.rpm',
-                    name: 'artifacts-rocky-9'
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'artifacts/*el9*.rpm',
-                    fingerprint: true
-                }
-            }
-        }
-        stage('Upload To Playground') {
-            when {
-                anyOf {
-                    expression { params.PLAYGROUND == true }
-                }
-            }
-            steps {
-                unstash 'artifacts-ubuntu-jammy'
-                unstash 'artifacts-ubuntu-noble'
-                unstash 'artifacts-rocky-8'
-                unstash 'artifacts-rocky-9'
-
-                script {
-                    def server = Artifactory.server 'zextras-artifactory'
-                    def buildInfo
-                    def uploadSpec
-                    buildInfo = Artifactory.newBuildInfo()
-                    uploadSpec = """{
-                        "files": [
-                            {
-                                "pattern": "artifacts/*jammy*.deb",
-                                "target": "ubuntu-playground/pool/",
-                                "props": "deb.distribution=jammy;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
-                            },
-                            {
-                                "pattern": "artifacts/*noble*.deb",
-                                "target": "ubuntu-playground/pool/",
-                                "props": "deb.distribution=noble;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
-                            },
-                            {
-                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el8.x86_64.rpm",
-                                "target": "centos8-playground/zextras/{1}/{1}-{2}.el8.x86_64.rpm",
-                                "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
-                            },
-                            {
-                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el9.x86_64.rpm",
-                                "target": "rhel9-playground/zextras/{1}/{1}-{2}.el9.x86_64.rpm",
-                                "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
-                            }
+                    buildStage([
+                        prepare: true,
+                        overrides: [
+                            'ubuntu-jammy': [
+                                preBuildScript: '''
+                                    echo "machine zextras.jfrog.io" >> auth.conf
+                                    echo "login ''' + USERNAME + '''" >> auth.conf
+                                    echo "password ''' + SECRET + '''" >> auth.conf
+                                    mv auth.conf /etc/apt
+                                    echo "deb [trusted=yes] https://zextras.jfrog.io/artifactory/ubuntu-''' + env.REPO_ENV + ''' jammy main" > zextras.list
+                                    echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list
+                                    mv *.list /etc/apt/sources.list.d/
+                                    apt-get update && apt-get install -y nodejs
+                                '''
+                            ],
+                            'ubuntu-noble': [
+                                preBuildScript: '''
+                                    echo "machine zextras.jfrog.io" >> auth.conf
+                                    echo "login ''' + USERNAME + '''" >> auth.conf
+                                    echo "password ''' + SECRET + '''" >> auth.conf
+                                    mv auth.conf /etc/apt
+                                    echo "deb [trusted=yes] https://zextras.jfrog.io/artifactory/ubuntu-''' + env.REPO_ENV + ''' noble main" > zextras.list
+                                    echo "deb [trusted=yes] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > nodesource.list
+                                    mv *.list /etc/apt/sources.list.d/
+                                    apt-get update && apt-get install -y nodejs
+                                '''
+                            ],
+                            'rocky-8': [
+                                preBuildScript: '''
+                                    echo "[Zextras]" > zextras.repo
+                                    echo "name=Zextras" >> zextras.repo
+                                    echo "baseurl=https://''' + USERNAME + ':' + SECRET + '''@zextras.jfrog.io/artifactory/centos8-''' + env.REPO_ENV + '''/" >> zextras.repo
+                                    echo "enabled=1" >> zextras.repo
+                                    echo "gpgcheck=0" >> zextras.repo
+                                    echo "gpgkey=https://''' + USERNAME + ':' + SECRET + '''@zextras.jfrog.io/artifactory/centos8-''' + env.REPO_ENV + '''/repomd.xml.key" >> zextras.repo
+                                    echo "[nodesource-nodejs]" > nodesource-nodistro.repo
+                                    echo "name=NodeSource" >> nodesource-nodistro.repo
+                                    echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo
+                                    echo "enabled=1" >> nodesource-nodistro.repo
+                                    echo "gpgcheck=0" >> nodesource-nodistro.repo
+                                    mv *.repo /etc/yum.repos.d/
+                                    dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
+                                ''',
+                                branchBuildDirs: [
+                                    devel: [ 'rpm-only', '.' ]
+                                ]
+                            ],
+                            'rocky-9': [
+                                preBuildScript: '''
+                                    echo "[Zextras]" > zextras.repo
+                                    echo "name=Zextras" >> zextras.repo
+                                    echo "baseurl=https://''' + USERNAME + ':' + SECRET + '''@zextras.jfrog.io/artifactory/rhel9-''' + env.REPO_ENV + '''/" >> zextras.repo
+                                    echo "enabled=1" >> zextras.repo
+                                    echo "gpgcheck=0" >> zextras.repo
+                                    echo "gpgkey=https://''' + USERNAME + ':' + SECRET + '''@zextras.jfrog.io/artifactory/rhel9-''' + env.REPO_ENV + '''/repomd.xml.key" >> zextras.repo
+                                    echo "[nodesource-nodejs]" > nodesource-nodistro.repo
+                                    echo "name=NodeSource" >> nodesource-nodistro.repo
+                                    echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo
+                                    echo "enabled=1" >> nodesource-nodistro.repo
+                                    echo "gpgcheck=0" >> nodesource-nodistro.repo
+                                    mv *.repo /etc/yum.repos.d/
+                                    dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
+                                ''',
+                                branchBuildDirs: [
+                                    devel: [ 'rpm-only', '.' ]
+                                ]
+                            ],
                         ]
-                    }"""
-                    server.upload spec: uploadSpec, buildInfo: buildInfo, failNoOp: false
+                    ])
                 }
             }
         }
-        stage('Upload To Devel') {
-            when {
-                branch 'devel'
-            }
+
+        stage('Upload artifacts')
+        {
             steps {
-                unstash 'artifacts-ubuntu-jammy'
-                unstash 'artifacts-ubuntu-noble'
-                unstash 'artifacts-rocky-8'
-                unstash 'artifacts-rocky-9'
-
-                script {
-                    def server = Artifactory.server 'zextras-artifactory'
-                    def buildInfo
-                    def uploadSpec
-                    buildInfo = Artifactory.newBuildInfo()
-                    uploadSpec = """{
-                        "files": [
-                            {
-                                "pattern": "artifacts/*jammy*.deb",
-                                "target": "ubuntu-devel/pool/",
-                                "props": "deb.distribution=jammy;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
-                            },
-                            {
-                                "pattern": "artifacts/*noble*.deb",
-                                "target": "ubuntu-devel/pool/",
-                                "props": "deb.distribution=noble;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
-                            },
-                            {
-                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el8.x86_64.rpm",
-                                "target": "centos8-devel/zextras/{1}/{1}-{2}.el8.x86_64.rpm",
-                                "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
-                            },
-                            {
-                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el9.x86_64.rpm",
-                                "target": "rhel9-devel/zextras/{1}/{1}-{2}.el9.x86_64.rpm",
-                                "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
-                            }
-                        ]
-                    }"""
-                    server.upload spec: uploadSpec, buildInfo: buildInfo, failNoOp: false
-                }
-            }
-        }
-        stage('Upload & Promotion Config') {
-            when {
-                buildingTag()
-            }
-            steps {
-                unstash 'artifacts-ubuntu-jammy'
-                unstash 'artifacts-ubuntu-noble'
-                unstash 'artifacts-rocky-8'
-                unstash 'artifacts-rocky-9'
-
-                script {
-                    def server = Artifactory.server 'zextras-artifactory'
-                    def buildInfo
-                    def uploadSpec
-                    def config
-
-                    // ubuntu
-                    buildInfo = Artifactory.newBuildInfo()
-                    buildInfo.name += "-ubuntu"
-                    uploadSpec = """{
-                        "files": [
-                            {
-                                "pattern": "artifacts/*jammy*.deb",
-                                "target": "ubuntu-rc/pool/",
-                                "props": "deb.distribution=jammy;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
-                            },
-                            {
-                                "pattern": "artifacts/*noble*.deb",
-                                "target": "ubuntu-rc/pool/",
-                                "props": "deb.distribution=noble;deb.component=main;deb.architecture=amd64;vcs.revision=${env.GIT_COMMIT}"
-                            }
-                        ]
-                    }"""
-                    server.upload spec: uploadSpec, buildInfo: buildInfo, failNoOp: false
-                    config = [
-                            'buildName'          : buildInfo.name,
-                            'buildNumber'        : buildInfo.number,
-                            'sourceRepo'         : 'ubuntu-rc',
-                            'targetRepo'         : 'ubuntu-release',
-                            'comment'            : 'Do not change anything! Just press the button',
-                            'status'             : 'Released',
-                            'includeDependencies': false,
-                            'copy'               : true,
-                            'failFast'           : true
-                    ]
-                    Artifactory.addInteractivePromotion server: server, promotionConfig: config, displayName: "Ubuntu Promotion to Release"
-                    server.publishBuildInfo buildInfo
-
-                    // rhel8
-                    buildInfo = Artifactory.newBuildInfo()
-                    buildInfo.name += "-centos8"
-                    uploadSpec= """{
-                        "files": [
-                            {
-                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el8.x86_64.rpm",
-                                "target": "centos8-rc/zextras/{1}/{1}-{2}.el8.x86_64.rpm",
-                                "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
-                            }
-                        ]
-                    }"""
-                    server.upload spec: uploadSpec, buildInfo: buildInfo, failNoOp: false
-                    config = [
-                            'buildName'          : buildInfo.name,
-                            'buildNumber'        : buildInfo.number,
-                            'sourceRepo'         : 'centos8-rc',
-                            'targetRepo'         : 'centos8-release',
-                            'comment'            : 'Do not change anything! Just press the button',
-                            'status'             : 'Released',
-                            'includeDependencies': false,
-                            'copy'               : true,
-                            'failFast'           : true
-                    ]
-                    Artifactory.addInteractivePromotion server: server, promotionConfig: config, displayName: "Centos8 Promotion to Release"
-                    server.publishBuildInfo buildInfo
-
-                    // rhel9
-                    buildInfo = Artifactory.newBuildInfo()
-                    buildInfo.name += "-rhel9"
-                    uploadSpec= """{
-                        "files": [
-                            {
-                                "pattern": "artifacts/(carbonio-docs-editor)-(*).el9.x86_64.rpm",
-                                "target": "rhel9-rc/zextras/{1}/{1}-{2}.el9.x86_64.rpm",
-                                "props": "rpm.metadata.arch=x86_64;rpm.metadata.vendor=zextras;vcs.revision=${env.GIT_COMMIT}"
-                            }
-                        ]
-                    }"""
-                    server.upload spec: uploadSpec, buildInfo: buildInfo, failNoOp: false
-                    config = [
-                            'buildName'          : buildInfo.name,
-                            'buildNumber'        : buildInfo.number,
-                            'sourceRepo'         : 'rhel9-rc',
-                            'targetRepo'         : 'rhel9-release',
-                            'comment'            : 'Do not change anything! Just press the button',
-                            'status'             : 'Released',
-                            'includeDependencies': false,
-                            'copy'               : true,
-                            'failFast'           : true
-                    ]
-                    Artifactory.addInteractivePromotion server: server, promotionConfig: config, displayName: "RHEL9 Promotion to Release"
-                    server.publishBuildInfo buildInfo
-                }
+                uploadStage([
+                    packages: yapHelper.getPackageNames()
+                ])
             }
         }
     }
