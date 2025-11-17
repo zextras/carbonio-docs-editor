@@ -1,6 +1,6 @@
 pkgname="carbonio-docs-editor"
 pkgver="25.04.3"
-pkgrel="1"
+pkgrel="2"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
 url="https://zextras.com"
@@ -110,13 +110,13 @@ makedepends__yum=(
 source=(
   "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
   "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=25.04.3"
+  "521-${pkgname}.sh"
   "zextras-server.patch"
   "25-04-3.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
   "${pkgname}.service"
   "${pkgname}-sidecar.service"
-  "${pkgname}-setup.sh"
   "intentions.json"
   "policies.json"
   "service-protocol.json"
@@ -125,13 +125,13 @@ source=(
 sha256sums=(
   '9793df2d582bd0b7eab7f81372253e80f85a11dcb27ac0fd0d073aec104629db'
   'SKIP'
+  '13b502512fa0cb8e1e7d88048c63c4b3f2c4b72de0e25a269d97995de00bc1a3'
   '7b8c8b14f091bd6d9c278a557658bccf1c2b3aa96f910f679b2fb2b81d0c66b9'
   '79903106094877781bd54aa9f60953b3a3cea033c89f7c673510f79d26a77084'
   'eb1673fe3a5d08cff7700bbae2eddb8fc172f857b299aeadbd191e87e007ce0b'
   'f7ebde2d9e4c7408f9cde0b074d733e12b90b0c0cd1ae09af0f2ba3de14b0583'
   'f8ff2a3065e79e3cd649f6da78d08ee886c584567721058f08e4e6e59b5adef0'
   'ddd7b9e1377f4ab98c19ba51e74c5270324523dd457c8452e5952cf9faf90850'
-  '13b502512fa0cb8e1e7d88048c63c4b3f2c4b72de0e25a269d97995de00bc1a3'
   '5b5d9a3f770345b2793b01903f0af65298fdd581c8c072299efa603c92872271'
   'cce9a36e4e173901f54fe399f120da749054b98a377bcbd7f34b7b50457385c1'
   '5bad5690faa7d49fa2aabedae8e04a2492e9376759ab0643c797276d33d9197a'
@@ -227,8 +227,8 @@ package() {
   install -Dm755 "${srcdir}/${pkgname}-template.hcl" \
     "${pkgdir}/etc/zextras/service-discover/templates/${pkgname}-template.hcl"
 
-  install -Dm644 "${srcdir}/${pkgname}-setup.sh" \
-    "${pkgdir}/etc/zextras/pending-setups.d/${pkgname}.sh"
+  install -Dm644 "${srcdir}/521-${pkgname}.sh" \
+    "${pkgdir}/etc/zextras/pending-setups.d/521-${pkgname}.sh"
 
   install -Dm644 "${srcdir}/intentions.json" \
     "${pkgdir}/etc/carbonio/docs-editor/service-discover/intentions.json"

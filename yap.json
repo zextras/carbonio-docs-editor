@@ -1,9 +1,9 @@
 {
     "name": "Carbonio Docs Editor",
-    "Description": "This is the Carbonio Docs Editor project",
+    "description": "This is the Carbonio Docs Editor project",
     "buildDir": "/tmp/",
     "output": "artifacts",
-    "Projects": [
+    "projects": [
         {
             "name": "package"
         }
