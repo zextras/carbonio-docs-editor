@@ -1,5 +1,5 @@
 pkgname="python3-polib"
-pkgver="1.1.1"
+pkgver="1.1.1" # renovate: datasource=pypi depName=polib
 pkgrel="1"
 pkgdesc="A library to manipulate gettext files"
 maintainer="Zextras <packages@zextras.com>"
