@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 pkgname="python3-polib"
-pkgver="1.1.1" # renovate: datasource=pypi depName=polib
+pkgver="1.2.0" # renovate: datasource=pypi depName=polib
 pkgrel="1"
 pkgdesc="A library to manipulate gettext files"
 maintainer="Zextras <packages@zextras.com>"
