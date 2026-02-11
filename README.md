@@ -1,19 +1,27 @@
+<!--
+SPDX-FileCopyrightText: 2022 Zextras <https://www.zextras.com>
+
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Carbonio Docs Editor
 
-A Carbonio service for document editing capabilities with service discovery and proxy integration.
+A document editing service for the Carbonio suite, providing web-based office document editing powered by Collabora Online with service mesh integration.
 
 ## Overview
 
-Carbonio Docs Editor is a document editing service that runs as part of the Carbonio suite. It provides document editing functionality through a web interface and integrates with HashiCorp Consul for service discovery and management.
+Carbonio Docs Editor is a packaging and configuration project that builds [Collabora Online](https://github.com/CollaboraOnline/online) with Zextras branding and integration patches, producing DEB and RPM packages for deployment within the Carbonio email and collaboration platform. It provides document editing functionality through a web interface and integrates with HashiCorp Consul for service discovery and management.
 
 ## Components
 
 ### Core Service
+
 - **Main Service**: Runs on port 10000 using Collabora Online (coolwsd)
 - **Sidecar Proxy**: Envoy-based proxy for service mesh integration
 - **Service Discovery**: Consul-based service registration and routing
 
 ### Key Files
+
 - `carbonio-docs-editor`: Setup script for service configuration
 - `carbonio-docs-editor.service`: Systemd service for the main application
 - `carbonio-docs-editor-sidecar.service`: Systemd service for the Envoy sidecar
@@ -27,52 +35,89 @@ Carbonio Docs Editor is a document editing service that runs as part of the Carb
 - Support for multiple service instances
 - HTTP protocol support with specific path permissions
 
-## Installation
+## Quick Start
 
-1. Run the setup script as root:
 ```bash
-sudo carbonio-docs-editor setup
+# See all available commands
+make help
+
+# Build for Ubuntu 22.04 (Zextras devs with Artifactory access)
+make build TARGET=ubuntu-jammy
+
+# Build with locally built dependencies (community contributors)
+make build TARGET=ubuntu-jammy \
+  THIRDS_DIR=../carbonio-thirds/artifacts \
+  CORE_DIR=../carbonio-docs-core/artifacts
+
+# Clean build artifacts
+make clean
 ```
 
-This will:
-- Configure Consul service discovery
-- Generate routing configurations
-- Set up ACL policies and tokens
-- Start the services
+### Prerequisites
+
+- Podman or Docker installed
+- Make
+- (Optional) Pre-built artifacts from [carbonio-thirds](https://github.com/zextras/carbonio-thirds) and [carbonio-docs-core](https://github.com/zextras/carbonio-docs-core)
+
+### Build Dependencies
+
+This project requires packages from two sibling projects at build time:
+
+- **carbonio-thirds** — provides `carbonio-openssl` and `carbonio-poco`
+- **carbonio-docs-core** — provides `carbonio-docs-core`
+
+Zextras developers with Artifactory access can build without providing these locally. Community contributors should build both projects first, then pass their artifact directories via `THIRDS_DIR` and `CORE_DIR`.
+
+### Supported Targets
+
+- `ubuntu-jammy` - Ubuntu 22.04 LTS
+- `ubuntu-noble` - Ubuntu 24.04 LTS
+- `rocky-8` - Rocky Linux 8
+- `rocky-9` - Rocky Linux 9
+
+### Configuration
+
+You can customize the build by setting environment variables:
+
+```bash
+# Use a specific container runtime
+make build TARGET=ubuntu-jammy CONTAINER_RUNTIME=docker
+
+# Specify dependency directories
+make build TARGET=rocky-9 \
+  THIRDS_DIR=../carbonio-thirds/artifacts \
+  CORE_DIR=../carbonio-docs-core/artifacts
+```
+
+## Installation
+
+These packages are distributed as part of the [Carbonio platform](https://zextras.com/carbonio). To install:
+
+### Ubuntu (Jammy/Noble)
+
+```bash
+apt-get install <package-name>
+```
+
+### Rocky Linux (8/9)
+
+```bash
+yum install <package-name>
+```
 
 ## Service Configuration
 
 The service uses:
+
 - **Port**: 10000 for the main service
 - **Proxy Port**: 20000 for upstream connectivity
 - **Protocol**: HTTP
 - **Service ID**: Generated automatically per instance
 
-## Development
+## Contributing
 
-### Build System
-- Uses Jenkins for CI/CD
-- Supports multiple Linux distributions (Ubuntu, Rocky Linux)
-- Builds both DEB and RPM packages
-- Node.js dependency management
+See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to this project.
 
-### Configuration Files
-- `carbonio-docs-editor-template.hcl`: Consul service template
-- `intentions.json`: Service mesh intentions
-- `policies.json`: ACL policies
-- `service-protocol.json`: Protocol configuration
+## License
 
-## Architecture
-
-The service follows a microservices pattern with:
-- Main application service
-- Envoy sidecar proxy for traffic management
-- Consul for service discovery and configuration
-- Automatic routing based on service IDs
-
-## Security
-
-- Consul ACL policies for service access control
-- Token-based authentication
-- Specific HTTP path permissions for preview service integration
-- Systemd security hardening with sandboxing
+This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE.md](LICENSE.md) file for details.
