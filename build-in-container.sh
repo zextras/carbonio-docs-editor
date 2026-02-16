@@ -37,7 +37,13 @@ install_packages() {
         apt-get update
         find "$dir" -name '*.deb' -exec dpkg -i {} + || apt-get install -f -y
     elif [ -f /etc/redhat-release ]; then
-        find "$dir" -name '*.rpm' -exec rpm -ivh --force {} +
+        # Enable EPEL for additional dependencies
+        echo "==> Enabling EPEL repository"
+        yum install -y epel-release
+
+        # Use yum localinstall to resolve dependencies automatically
+        echo "==> Installing RPM packages with dependency resolution"
+        yum install -y "$dir"/*.rpm
     else
         echo "Error: Unknown distribution"
         exit 1
@@ -58,7 +64,18 @@ if [ -f /etc/debian_version ]; then
     apt-get update
     apt-get install -y nodejs
 elif [ -f /etc/redhat-release ]; then
-    yum install -y https://rpm.nodesource.com/pub_22.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm
+    SYS_ARCH=$(uname -m)
+    cat > /etc/yum.repos.d/nodesource-nodejs.repo <<NODEREPO
+[nodesource-nodejs]
+name=Node.js Packages for Linux RPM based distros - ${SYS_ARCH}
+baseurl=https://rpm.nodesource.com/pub_22.x/nodistro/nodejs/${SYS_ARCH}
+priority=9
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.nodesource.com/gpgkey/ns-operations-public.key
+module_hotfixes=1
+NODEREPO
+    yum makecache --disablerepo="*" --enablerepo="nodesource-nodejs"
     yum install -y nodejs
 fi
 
@@ -69,8 +86,8 @@ install_packages "$THIRDS_DIR" "third-party dependencies (carbonio-thirds)"
 install_packages "$CORE_DIR" "core dependencies (carbonio-docs-core)"
 
 # Prepare yap
-echo "==> Running yap prepare $DISTRO -g"
-yap prepare "$DISTRO" -g
+echo "==> Running yap prepare $DISTRO"
+yap prepare "$DISTRO"
 
 # Build package
 echo "==> Running yap build $DISTRO $PACKAGE_DIR"
