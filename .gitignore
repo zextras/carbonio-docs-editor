@@ -1,3 +1,8 @@
+# Tarballs
+*.tar
+*.tar.gz
+*.tar.xz
+
 # Log files
 *.log
 
@@ -71,3 +76,7 @@ override.conf
 # Package build files
 PKGBUILD/
 *.pkg.tar.xz
+
+# SSH secrets for build
+ssh.secret
+.ssh_known_hosts
