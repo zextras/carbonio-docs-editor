@@ -55,6 +55,7 @@ make clean
 
 ### Prerequisites
 
+- [yap](https://github.com/nicholasgasior/yap) >= 1.48
 - Podman or Docker installed
 - Make
 - (Optional) Pre-built artifacts from [carbonio-thirds](https://github.com/zextras/carbonio-thirds) and [carbonio-docs-core](https://github.com/zextras/carbonio-docs-core)
