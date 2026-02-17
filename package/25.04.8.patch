@@ -1,65 +1,65 @@
 diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/control/Control.Menubar.ts
 --- original/browser/src/control/Control.Menubar.ts	2025-07-02 07:23:17.000000000 +0200
 +++ modified/browser/src/control/Control.Menubar.ts	2025-07-30 15:09:27.134031686 +0200
-@@ -468,7 +468,6 @@
+@@ -420,7 +420,6 @@
  				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
  				{name: _('About'), id: 'about', type: 'action'}]
  			},
 -			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
  		],
-
+ 
  		presentation: [
-@@ -644,7 +643,6 @@
+@@ -603,7 +602,6 @@
  				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
  				{name: _('About'), id: 'about', type: 'action'}]
  			},
 -			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
  		],
-
+ 
  		drawing: [
-@@ -781,7 +779,6 @@
+@@ -742,7 +740,6 @@
  				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
  				{name: _('About'), id: 'about', type: 'action'}]
  			},
 -			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
  		],
-
+ 
  		spreadsheet: [
-@@ -1071,7 +1068,6 @@
+@@ -1040,7 +1037,6 @@
  				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
  				{name: _('About'), id: 'about', type: 'action'}]
  			},
 -			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
  		],
-
+ 
  		mobiletext:  [
-@@ -1480,7 +1476,6 @@
+@@ -1470,7 +1466,6 @@
  	private _hiddenItems: string[] = [];
  	private _menubarCont: HTMLElement | null = null;
  	private _isFileODF: boolean = true;
 -	private lastModIndicator: HTMLElement | null = null;
  	private _map: any;
-
+ 
  	/**
-@@ -1514,8 +1509,6 @@
+@@ -1508,8 +1503,6 @@
  		map.on('addmenu', this._addMenu, this);
  		map.on('languagesupdated', this._onInitLanguagesMenu, this);
  		map.on('updatetoolbarcommandvalues', this._onStyleMenu, this);
 -		map.on('initmodificationindicator', this._onInitModificationIndicator, this);
 -		map.on('updatemodificationindicator', this._onUpdateModificationIndicator, this);
  	}
-
+ 
  	/**
-@@ -1528,8 +1521,6 @@
+@@ -1522,8 +1515,6 @@
  		this._map.off('addmenu', this._addMenu, this);
  		this._map.off('languagesupdated', this._onInitLanguagesMenu, this);
  		this._map.off('updatetoolbarcommandvalues', this._onStyleMenu, this);
 -		this._map.off('initmodificationindicator', this._onInitModificationIndicator, this);
 -		this._map.off('updatemodificationindicator', this._onUpdateModificationIndicator, this);
  		app.events.off('updatepermission', this._onRefresh);
-
+ 
  		this._menubarCont?.remove();
-@@ -2934,47 +2925,6 @@
+@@ -2945,45 +2936,4 @@
  		}
  		return null;
  	}
@@ -69,14 +69,14 @@ diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/
 -	 * @param lastmodtime - The last modification time.
 -	 */
 -	private _onInitModificationIndicator(lastmodtime: any): void {
--		var lastModButton = L.DomUtil.get('menu-last-mod');
+-		var lastModButton = window.L.DomUtil.get('menu-last-mod');
 -		if (lastModButton !== null && lastModButton !== undefined
 -			&& lastModButton.firstChild
 -			&& lastModButton.firstChild.innerHTML !== null
 -			&& lastModButton.firstChild.childElementCount == 0) {
 -			if (lastmodtime == null) {
 -				// No modification time -> hide the indicator
--				L.DomUtil.setStyle(lastModButton, 'display', 'none');
+-				window.L.DomUtil.setStyle(lastModButton, 'display', 'none');
 -				return;
 -			}
 -			var mainSpan = document.createElement('span');
@@ -87,8 +87,8 @@ diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/
 -			lastModButton.firstChild.replaceChildren();
 -			lastModButton.firstChild.appendChild(mainSpan);
 -
--			if (L.Params.revHistoryEnabled) {
--				L.DomUtil.setStyle(lastModButton, 'cursor', 'pointer');
+-			if (window.L.Params.revHistoryEnabled) {
+-				window.L.DomUtil.setStyle(lastModButton, 'cursor', 'pointer');
 -			}
 -
 -			this._map.fire('modificationindicatorinitialized');
@@ -105,15 +105,13 @@ diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/
 -		}
 -	}
  }
-
- L.control.menubar = () => {
 diff -Naur original/browser/src/map/Map.js modified/browser/src/map/Map.js
 --- original/browser/src/map/Map.js	2025-07-02 07:23:17.000000000 +0200
 +++ modified/browser/src/map/Map.js	2025-07-30 15:11:11.667928504 +0200
-@@ -150,10 +150,6 @@
- 			}
- 		});
-
+@@ -136,10 +136,6 @@
+ 
+ 		this._debug = new app.DebugManager(this);
+ 
 -		this.on('modificationindicatorinitialized', function() {
 -			this._modIndicatorInitialized = true;
 -		});
@@ -121,30 +119,30 @@ diff -Naur original/browser/src/map/Map.js modified/browser/src/map/Map.js
  		// When all these conditions are met, fire statusindicator:initializationcomplete
  		this.initConditions = {
  			'doclayerinit': false,
-@@ -245,9 +241,6 @@
+@@ -231,9 +227,6 @@
  		// after we receive status for the first time.
  		this._docLoadedOnce = false;
-
+ 
 -		//Last modified time of document saved state
 -		this._lastModDateValue = '';
 -
  		this.on('commandstatechanged', function(e) {
  			if (e.commandName === '.uno:ModifiedStatus') {
  				this._everModified = this._everModified || (e.state === 'true');
-@@ -299,9 +292,6 @@
+@@ -291,9 +284,6 @@
  					commentSection.clearList();
  			}
-
+ 
 -			if (!window.mode.isMobile())
 -				this.initializeModificationIndicator();
 -
- 			// Show sidebar.
- 			if (this._docLayer && !this._docLoadedOnce) {
- 				// Let the first page finish loading then load the sidebar.
-@@ -470,64 +460,6 @@
+ 			// We have loaded.
+ 			if (!this._docLoadedOnce) {
+ 				this._docLoadedOnce = this._docLoaded;
+@@ -460,64 +450,6 @@
  		}
  	},
-
+ 
 -	initializeModificationIndicator: function() {
 -		this.fire('initmodificationindicator', this._lastmodtime);
 -		this.updateModificationIndicator(this._lastmodtime);
@@ -186,13 +184,13 @@ diff -Naur original/browser/src/map/Map.js modified/browser/src/map/Map.js
 -			this.fire('updatemodificationindicator', {lastSaved: dateValue});
 -
 -			if (timeout) {
--				this._modTimeout = setTimeout(L.bind(this.updateModificationIndicator, this, -1), timeout);
+-				this._modTimeout = setTimeout(window.L.bind(this.updateModificationIndicator, this, -1), timeout);
 -			}
 -		}
 -		if (this.lastModIndicator !== null && this.lastModIndicator !== undefined)
 -			this.lastModIndicator.innerHTML = dateValue;
 -		this.setLastModDateValue(dateValue);
--		this._modTimeout = setTimeout(L.bind(this.updateModificationIndicator, this, -1), timeout);
+-		this._modTimeout = setTimeout(window.L.bind(this.updateModificationIndicator, this, -1), timeout);
 -	},
 -
 -	setLastModDateValue: function(dateValue) {
@@ -209,7 +207,7 @@ diff -Naur original/browser/src/map/Map.js modified/browser/src/map/Map.js
 diff -Naur original/common/Authorization.cpp modified/common/Authorization.cpp
 --- original/common/Authorization.cpp	2025-07-02 07:23:17.000000000 +0200
 +++ modified/common/Authorization.cpp	2025-07-29 11:18:57.729391862 +0200
-@@ -23,21 +23,40 @@
+@@ -24,21 +24,40 @@
  {
      if (_type == Authorization::Type::Token)
      {
@@ -253,7 +251,7 @@ diff -Naur original/common/Authorization.cpp modified/common/Authorization.cpp
 diff -Naur original/wsd/RequestDetails.cpp modified/wsd/RequestDetails.cpp
 --- original/wsd/RequestDetails.cpp	2025-07-02 07:23:17.000000000 +0200
 +++ modified/wsd/RequestDetails.cpp	2025-07-29 15:24:26.330365794 +0200
-@@ -109,7 +109,9 @@
+@@ -130,7 +130,9 @@
      std::string wopiSrcWithOptions = decodedWopiSrc;
      if (!options.empty())
      {
@@ -264,7 +262,7 @@ diff -Naur original/wsd/RequestDetails.cpp modified/wsd/RequestDetails.cpp
      }
  
      for (const std::string& option : options)
-@@ -292,6 +294,10 @@
+@@ -303,6 +305,10 @@
      uriPublic.setQueryParameters(queryParams);
  
      LOG_DBG("Sanitized URI [" << uri << "] to [" << uriPublic.toString() << ']');
@@ -280,7 +278,7 @@ diff -Naur original/wsd/wopi/CheckFileInfo.cpp modified/wsd/wopi/CheckFileInfo.c
 +++ modified/wsd/wopi/CheckFileInfo.cpp	2025-07-29 10:37:32.054958036 +0200
 @@ -33,6 +33,10 @@
      Authorization auth = Authorization::create(_url);
-     http::Request httpRequest = StorageConnectionManager::createHttpRequest(_url, auth);
+     const http::Request httpRequest = StorageConnectionManager::createHttpRequest(_url, auth);
  
 +    LOG_DBG("CheckFileInfo::checkFileInfo - Original URL: [" << _url.toString() << "]");
 +    LOG_DBG("CheckFileInfo::checkFileInfo - URL path: [" << _url.getPath() << "], query: [" << _url.getQuery() << "]");
@@ -302,7 +300,7 @@ diff -Naur original/wsd/wopi/StorageConnectionManager.cpp modified/wsd/wopi/Stor
  }
  
 @@ -130,6 +132,10 @@
-         httpRequest.header().set(pair.first, pair.second);
+         httpRequest.set(pair.first, pair.second);
      }
  
 +    LOG_DBG("StorageConnectionManager::createHttpRequest - Input URI: [" << uri.toString() << "]");
