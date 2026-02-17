@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 pkgname="carbonio-docs-editor"
-pkgver="25.04.3" # renovate: datasource=github-tags depName=CollaboraOnline/online extractVersion=^cp-(?<version>.+)-\d+$
+pkgver="25.04.8" # renovate: datasource=github-tags depName=CollaboraOnline/online extractVersion=^cp-(?<version>.+)-\d+$
+_pkgrel="3"
 pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
@@ -112,11 +113,11 @@ makedepends__yum=(
   "rsync"
 )
 source=(
-  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-2.tar.gz"
-  "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=25.04.3"
+  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-${_pkgrel}.tar.gz"
+  "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=25.04.8"
   "521-${pkgname}.sh"
   "zextras-server.patch"
-  "25-04-3.patch"
+  "${pkgver}.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
   "${pkgname}.service"
@@ -127,23 +128,23 @@ source=(
   "carbonio-docs-routes-generator.py"
 )
 sha256sums=(
-  '9793df2d582bd0b7eab7f81372253e80f85a11dcb27ac0fd0d073aec104629db'
-  'SKIP'
-  'de92dd50a764f5cdeec3def565bbf565881ccd6bd07b80996c86dae741ff4c06'
-  '7b8c8b14f091bd6d9c278a557658bccf1c2b3aa96f910f679b2fb2b81d0c66b9'
-  '79903106094877781bd54aa9f60953b3a3cea033c89f7c673510f79d26a77084'
-  '0e7116dbcf6e9008f08ce1d29f459005a0a19a00ac6ec1d79fbefd7c26bcc137'
-  '7f56f426a784c7868d8543cc63c05669371d7ccd8ccab3a7df95d0a27e126c78'
-  'c2bba7d808a64f8be0b55d5028b8fb0a101c9f8172bcc7ad9c32bfa91218197b'
-  '1c75dbfe711fc2cee3fb123b4a43135b984ab869545ec0d4a2d1b76060e9b799'
-  '5b5d9a3f770345b2793b01903f0af65298fdd581c8c072299efa603c92872271'
-  'cce9a36e4e173901f54fe399f120da749054b98a377bcbd7f34b7b50457385c1'
-  '5bad5690faa7d49fa2aabedae8e04a2492e9376759ab0643c797276d33d9197a'
-  'd29079924293caa36c0415e95ebe84a529bb04ce34b26f7899669b45fc68a2f1'
+  '37e3557301266e4efa8467a0ba042b8169d5ff7363156813f3977ebf02422871'  # CollaboraOnline/online/archive/cp-25.04.8-3.tar.gz
+  'SKIP'                                                              # zextras/carbonio-docs-branding.git#tag=25.04.8
+  'de92dd50a764f5cdeec3def565bbf565881ccd6bd07b80996c86dae741ff4c06'  # 521-carbonio-docs-editor.sh
+  '93cddb89cce196f8b708358d7ae2f5ee206bfc7447135e721053e3d9239ae69f'  # zextras-server.patch
+  'f33e14a8596180c6e8231d7dd05a0a3d617c42c9f2c1568b170be23215ccdcfb'  # 25.04.8.patch
+  '0e7116dbcf6e9008f08ce1d29f459005a0a19a00ac6ec1d79fbefd7c26bcc137'  # carbonio-docs-editor
+  '7f56f426a784c7868d8543cc63c05669371d7ccd8ccab3a7df95d0a27e126c78'  # carbonio-docs-editor-template.hcl
+  'c2bba7d808a64f8be0b55d5028b8fb0a101c9f8172bcc7ad9c32bfa91218197b'  # carbonio-docs-editor.service
+  '1c75dbfe711fc2cee3fb123b4a43135b984ab869545ec0d4a2d1b76060e9b799'  # carbonio-docs-editor-sidecar.service
+  '5b5d9a3f770345b2793b01903f0af65298fdd581c8c072299efa603c92872271'  # intentions.json
+  'cce9a36e4e173901f54fe399f120da749054b98a377bcbd7f34b7b50457385c1'  # policies.json
+  '5bad5690faa7d49fa2aabedae8e04a2492e9376759ab0643c797276d33d9197a'  # service-protocol.json
+  'd29079924293caa36c0415e95ebe84a529bb04ce34b26f7899669b45fc68a2f1'  # carbonio-docs-routes-generator.py
 )
 
 build() {
-  cd "${srcdir}/online-cp-${pkgver}-2"
+  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
 
   # Rebrand of static strings
   sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
@@ -153,7 +154,7 @@ build() {
   patch -Np1 -i "${srcdir}/zextras-server.patch"
 
   # Backend patch (no longer assumes base url is without get parameters and removed broken last modification https://github.com/CollaboraOnline/online/issues/11050)
-  patch -Np1 -i "${srcdir}/25-04-3.patch"
+  patch -Np1 -i "${srcdir}/${pkgver}.patch"
 
   # Disable unit-tests
   sed -i "s/test cypress_test//" Makefile.am
@@ -209,7 +210,7 @@ build() {
 }
 
 package() {
-  cd "${srcdir}/online-cp-${pkgver}-2"
+  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
 
   make DESTDIR="${pkgdir}" install
 
