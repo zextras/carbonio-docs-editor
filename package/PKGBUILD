@@ -145,26 +145,18 @@ sha256sums=(
   '9d88c203c2aec437801d02190defbba8a33126a3097ca937523ade9bca1c0557'
 )
 
-prepare__ubuntu_jammy() {
+_prepare() {
   cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
-
-  # Jammy's clang-14 lacks C++20 chrono formatters, so we need an
-  # explicit operator<< for std::chrono::hours.
-  patch -Np1 -i "${srcdir}/jammy-chrono-hours.patch"
-}
-
-build() {
-  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
-
-  # Rebrand of static strings
-  sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
-    $(grep -iIr "Collabora Online Development Edition" . | cut -d":" -f1)
 
   # Add zx spice
   patch -Np1 -i "${srcdir}/zextras-server.patch"
 
   # Backend patch (no longer assumes base url is without get parameters and removed broken last modification https://github.com/CollaboraOnline/online/issues/11050)
   patch -Np1 -i "${srcdir}/${pkgver}.patch"
+
+  # Rebrand of static strings
+  sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
+    $(grep -iIr "Collabora Online Development Edition" . | cut -d":" -f1)
 
   # Disable unit-tests
   sed -i "s/test cypress_test//" Makefile.am
@@ -179,6 +171,25 @@ build() {
   # use Zextras and Collabora Copyright label in about dialog
   sed -i "s/VENDOR/Collabora Productivity Limited.<br>Copyright © 2025, Zextras/g" \
     browser/html/cool.html.m4
+
+}
+
+prepare__ubuntu_jammy() {
+  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
+
+  # Jammy's clang-14 lacks C++20 chrono formatters, so we need an
+  # explicit operator<< for std::chrono::hours.
+  patch -Np1 -i "${srcdir}/jammy-chrono-hours.patch"
+
+  _prepare
+}
+
+prepare() {
+  _prepare
+}
+
+build() {
+  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
 
   export LDFLAGS="-Wl,-rpath,/opt/zextras/common/lib64 \
     -Wl,-rpath,/opt/zextras/common/lib \
