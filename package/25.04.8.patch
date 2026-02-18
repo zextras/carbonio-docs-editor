@@ -105,23 +105,6 @@ diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/
 -		}
 -	}
  }
-diff -Naur original/common/Util.hpp modified/common/Util.hpp
---- original/common/Util.hpp	2025-07-02 07:23:17.000000000 +0200
-+++ modified/common/Util.hpp	2025-07-30 16:00:00.000000000 +0200
-@@ -62,6 +62,13 @@
- #define FDCOUNTER_USABLE 1
- #endif
- 
-+/// Format hours with the units suffix until we migrate to C++20.
-+inline std::ostream& operator<<(std::ostream& os, const std::chrono::hours& h)
-+{
-+    os << h.count() << 'h';
-+    return os;
-+}
-+
- /// Format minutes with the units suffix until we migrate to C++20.
- inline std::ostream& operator<<(std::ostream& os, const std::chrono::minutes& s)
- {
 diff -Naur original/browser/src/map/Map.js modified/browser/src/map/Map.js
 --- original/browser/src/map/Map.js	2025-07-02 07:23:17.000000000 +0200
 +++ modified/browser/src/map/Map.js	2025-07-30 15:11:11.667928504 +0200
