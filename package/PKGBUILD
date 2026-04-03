@@ -122,6 +122,7 @@ source=(
   "${pkgname}-template.hcl"
   "${pkgname}.service"
   "${pkgname}-sidecar.service"
+  "${pkgname}-sidecar-legacy.service"
   "intentions.json"
   "policies.json"
   "service-protocol.json"
@@ -138,6 +139,7 @@ sha256sums=(
   '7f56f426a784c7868d8543cc63c05669371d7ccd8ccab3a7df95d0a27e126c78'
   'c2bba7d808a64f8be0b55d5028b8fb0a101c9f8172bcc7ad9c32bfa91218197b'
   '16c0a9f8d2165db99894ccf17549a30b08151bb47ed7ae4992efaa42aebb79af'
+  '0664faacf0fcc14fecdf640f175403e411e7e4accc78d90e7eea764489f61534'
   '5b5d9a3f770345b2793b01903f0af65298fdd581c8c072299efa603c92872271'
   'cce9a36e4e173901f54fe399f120da749054b98a377bcbd7f34b7b50457385c1'
   '5bad5690faa7d49fa2aabedae8e04a2492e9376759ab0643c797276d33d9197a'
@@ -230,7 +232,7 @@ build() {
   make build-nocheck -j8
 }
 
-package() {
+_package_common() {
   cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
 
   make DESTDIR="${pkgdir}" install
@@ -246,9 +248,6 @@ package() {
 
   install -Dm644 "${srcdir}/${pkgname}.service" \
     "${pkgdir}/lib/systemd/system/${pkgname}.service"
-
-  install -Dm644 "${srcdir}/${pkgname}-sidecar.service" \
-    "${pkgdir}/lib/systemd/system/${pkgname}-sidecar.service"
 
   install -Dm755 "${srcdir}/${pkgname}-template.hcl" \
     "${pkgdir}/etc/zextras/service-discover/templates/${pkgname}-template.hcl"
@@ -272,6 +271,30 @@ package() {
     "${pkgdir}/opt/zextras/docs/share/coolwsd/browser/dist"
   rm -rf "${pkgdir}/opt/zextras/docs/conf/apache2/"
   rm -rf "${pkgdir}/opt/zextras/docs/conf/nginx/"
+}
+
+_package_systemd() {
+  _package_common
+  install -Dm644 "${srcdir}/${pkgname}-sidecar.service" \
+    "${pkgdir}/lib/systemd/system/${pkgname}-sidecar.service"
+}
+
+_package_legacy() {
+  _package_common
+  install -Dm644 "${srcdir}/${pkgname}-sidecar-legacy.service" \
+    "${pkgdir}/lib/systemd/system/${pkgname}-sidecar.service"
+}
+
+package() {
+  _package_systemd
+}
+
+package__rocky_8() {
+  _package_legacy
+}
+
+package__ubuntu_jammy() {
+  _package_legacy
 }
 
 preinst() {
