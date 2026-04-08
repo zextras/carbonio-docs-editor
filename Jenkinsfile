@@ -41,6 +41,18 @@ pipeline {
             }
         }
 
+        stage('Publish docker image') {
+            steps {
+                dockerStage([
+                    dockerfile: 'docker/docs-editor-sidecar/Dockerfile',
+                    imageName: 'docs-editor-sidecar',
+                    ocLabels: [
+                        title: 'Carbonio Docs Editor Sidecar',
+                    ]
+                ])
+            }
+        }
+
         stage('Build deb/rpm') {
             steps {
                 echo 'Building deb/rpm packages'
