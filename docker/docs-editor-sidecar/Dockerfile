@@ -1,5 +1,13 @@
 FROM registry.dev.zextras.com/dev/carbonio-sidecar:latest
 
+# Install runtime dependencies needed by the setup script
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       python3 \
+       python3-requests \
+       jq \
+    && rm -rf /var/lib/apt/lists/*
+
 # Service registration (template, processed by routes generator)
 COPY package/carbonio-docs-editor-template.hcl /etc/zextras/service-discover/templates/
 
