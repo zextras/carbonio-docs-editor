@@ -56,6 +56,7 @@ pipeline {
                     }
 
                     buildStage([
+                        buildFlags: ' -ds ',
                         prepare: true,
                         overrides: [
                             'ubuntu-jammy': [
