@@ -16,7 +16,7 @@ properties(defaultPipelineProperties())
 pipeline {
     agent {
         node {
-            label 'base'
+            label 'zextras-v1'
         }
     }
 
@@ -45,7 +45,7 @@ pipeline {
             steps {
                 dockerStage([
                     dockerfile: 'docker/docs-editor-sidecar/Dockerfile',
-                    imageName: 'docs-editor-sidecar',
+                    imageName: 'registry.dev.zextras.com/dev/carbonio-docs-editor-sidecar',
                     ocLabels: [
                         title: 'Carbonio Docs Editor Sidecar',
                     ]
