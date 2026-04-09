@@ -16,7 +16,7 @@ properties(defaultPipelineProperties())
 pipeline {
     agent {
         node {
-            label 'base'
+            label 'zextras-v1'
         }
     }
 
@@ -38,6 +38,18 @@ pipeline {
                 script {
                     gitMetadata()
                 }
+            }
+        }
+
+        stage('Publish docker image') {
+            steps {
+                dockerStage([
+                    dockerfile: 'docker/docs-editor-sidecar/Dockerfile',
+                    imageName: 'registry.dev.zextras.com/dev/carbonio-docs-editor-sidecar',
+                    ocLabels: [
+                        title: 'Carbonio Docs Editor Sidecar',
+                    ]
+                ])
             }
         }
 
