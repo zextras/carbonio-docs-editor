@@ -18,7 +18,7 @@ COPY package/policies.json         /etc/carbonio/docs-editor/service-discover/
 
 # Routes generator (generates HCL, service-resolver, service-router)
 COPY package/carbonio-docs-routes-generator.py /usr/lib/carbonio-docs-routes-generator.py
-COPY entrypoint.sh /usr/local/bin/carbonio-docs-editor-entrypoint.sh
+COPY docker/docs-editor-sidecar/entrypoint.sh /usr/local/bin/carbonio-docs-editor-entrypoint.sh
 
 # Setup script
 COPY package/carbonio-docs-editor /usr/local/bin/carbonio-docs-editor
