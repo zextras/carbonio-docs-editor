@@ -8,4 +8,4 @@ fi
 consul services register /etc/zextras/service-discover/carbonio-docs-editor.hcl
 
 # See registry.dev.zextras.com/dev/carbonio-sidecar base entrypoint - just start sidecar in this case
-/usr/local/bin/entrypoint.sh do_start
+exec /usr/local/bin/entrypoint.sh do_start
