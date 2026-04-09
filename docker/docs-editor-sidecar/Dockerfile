@@ -29,4 +29,4 @@ ENV SERVICE_NAME=carbonio-docs-editor
 ENV SETUP_SCRIPT="carbonio-docs-editor setup"
 ENV TOKEN_FILE=/etc/carbonio/docs-editor/service-discover/token
 
-ENTRYPOINT ["carbonio-docs-editor-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/carbonio-docs-editor-entrypoint.sh"]
