@@ -82,46 +82,6 @@ pipeline {
                                     apt-get update && apt-get install -y nodejs
                                 '''
                             ],
-                            'rocky-8': [
-                                preBuildScript: '''
-                                    echo "[Zextras]" > zextras.repo
-                                    echo "name=Zextras" >> zextras.repo
-                                    echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-''' + env.REPO_ENV + '''/" >> zextras.repo
-                                    echo "enabled=1" >> zextras.repo
-                                    echo "gpgcheck=0" >> zextras.repo
-                                    echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/centos8-''' + env.REPO_ENV + '''/repomd.xml.key" >> zextras.repo
-                                    echo "[nodesource-nodejs]" > nodesource-nodistro.repo
-                                    echo "name=NodeSource" >> nodesource-nodistro.repo
-                                    echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo
-                                    echo "enabled=1" >> nodesource-nodistro.repo
-                                    echo "gpgcheck=0" >> nodesource-nodistro.repo
-                                    mv *.repo /etc/yum.repos.d/
-                                    dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
-                                ''',
-                                branchBuildDirs: [
-                                    devel: [ 'rpm-only', '.' ]
-                                ]
-                            ],
-                            'rocky-9': [
-                                preBuildScript: '''
-                                    echo "[Zextras]" > zextras.repo
-                                    echo "name=Zextras" >> zextras.repo
-                                    echo "baseurl=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-''' + env.REPO_ENV + '''/" >> zextras.repo
-                                    echo "enabled=1" >> zextras.repo
-                                    echo "gpgcheck=0" >> zextras.repo
-                                    echo "gpgkey=https://$USERNAME:$SECRET@zextras.jfrog.io/artifactory/rhel9-''' + env.REPO_ENV + '''/repomd.xml.key" >> zextras.repo
-                                    echo "[nodesource-nodejs]" > nodesource-nodistro.repo
-                                    echo "name=NodeSource" >> nodesource-nodistro.repo
-                                    echo "baseurl=https://rpm.nodesource.com/pub_$NODE_MAJOR.x/nodistro/nodejs/x86_64" >> nodesource-nodistro.repo
-                                    echo "enabled=1" >> nodesource-nodistro.repo
-                                    echo "gpgcheck=0" >> nodesource-nodistro.repo
-                                    mv *.repo /etc/yum.repos.d/
-                                    dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
-                                ''',
-                                branchBuildDirs: [
-                                    devel: [ 'rpm-only', '.' ]
-                                ]
-                            ],
                         ]
                     ])
                 }
