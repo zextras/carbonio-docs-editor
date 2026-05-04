@@ -1,6 +1,6 @@
 diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
---- a/browser/js/global.js	2025-07-16 14:00:40.689227885 +0200
-+++ b/browser/js/global.js	2025-07-16 14:00:51.119414438 +0200
+--- a/browser/js/global.js	2026-05-04 16:56:27.277259396 +0200
++++ b/browser/js/global.js	2026-05-04 16:57:35.066318597 +0200
 @@ -1753,6 +1753,16 @@
  		global.docURL = filePath;
  	}
@@ -30,8 +30,8 @@ diff '--color=auto' -Naur a/browser/js/global.js b/browser/js/global.js
  
  	// Form a valid WS URL to the host with the given path and
 diff '--color=auto' -Naur a/browser/src/control/Toolbar.js b/browser/src/control/Toolbar.js
---- a/browser/src/control/Toolbar.js	2025-07-16 14:00:40.717350401 +0200
-+++ b/browser/src/control/Toolbar.js	2025-07-16 14:00:51.120414423 +0200
+--- a/browser/src/control/Toolbar.js	2026-05-04 16:56:27.287259255 +0200
++++ b/browser/src/control/Toolbar.js	2026-05-04 16:57:35.066318597 +0200
 @@ -426,6 +426,14 @@
  
  		if (this.uiManager.isUIBlocked())
@@ -48,8 +48,8 @@ diff '--color=auto' -Naur a/browser/src/control/Toolbar.js b/browser/src/control
  			&& !command.startsWith('.uno:ToolbarMode') && !force) {
  			console.debug('Cannot execute: ' + command + ' when dialog is opened.');
 diff '--color=auto' -Naur a/browser/src/main.js b/browser/src/main.js
---- a/browser/src/main.js	2025-07-16 14:00:40.720465695 +0200
-+++ b/browser/src/main.js	2025-07-16 14:00:51.122222496 +0200
+--- a/browser/src/main.js	2026-05-04 16:56:27.287259255 +0200
++++ b/browser/src/main.js	2026-05-04 16:57:35.066318597 +0200
 @@ -132,4 +132,13 @@
  		'', _('OK'), null, false);
  }
@@ -65,8 +65,8 @@ diff '--color=auto' -Naur a/browser/src/main.js b/browser/src/main.js
 +
  }(window));
 diff '--color=auto' -Naur a/browser/src/map/Clipboard.js b/browser/src/map/Clipboard.js
---- a/browser/src/map/Clipboard.js	2025-07-16 14:00:40.720511677 +0200
-+++ b/browser/src/map/Clipboard.js	2025-07-16 14:00:51.122414394 +0200
+--- a/browser/src/map/Clipboard.js	2026-05-04 16:56:27.287259255 +0200
++++ b/browser/src/map/Clipboard.js	2026-05-04 17:01:01.956933146 +0200
 @@ -129,7 +129,8 @@
  		if (this._accessKey[idx] === '')
  			return '';
@@ -77,9 +77,37 @@ diff '--color=auto' -Naur a/browser/src/map/Clipboard.js b/browser/src/map/Clipb
  			'&ServerId=' + app.socket.WSDServer.Id +
  			'&ViewId=' + this._map._docLayer._viewId +
  			'&Tag=' + this._accessKey[idx];
+@@ -199,14 +200,19 @@
+ 		}
+ 		var meta = html.substring(start + prefix.length, end);
+ 
+-		// quick sanity checks that it one of ours.
+-		if (meta.indexOf('%2Fclipboard%3FWOPISrc%3D') >= 0 &&
+-		    meta.indexOf('%26ServerId%3D') > 0 &&
+-		    meta.indexOf('%26ViewId%3D') > 0 &&
+-		    meta.indexOf('%26Tag%3D') > 0)
+-			return decodeURIComponent(meta);
+-		else
+-			window.app.console.log('Mis-understood foreign origin: "' + meta + '"');
++                // quick sanity checks that it one of ours.
++                if (
++                    meta.indexOf('%2Fclipboard%3FWOPISrc%3D') >= 0 &&
++                    meta.indexOf('%26ServerId%3D') > 0 &&
++                    meta.indexOf('%26ViewId%3D') > 0 &&
++                    meta.indexOf('%26Tag%3D') > 0
++                ) {
++                    var decoded = decodeURIComponent(meta);
++                    if (window.serviceId)
++                        decoded = decoded.replace('clipboard?', 'clipboard?service_id=' + window.serviceId + '&');
++                    return decoded;
++                }
++		else window.app.console.log('Mis-understood foreign origin: "' + meta + '"');
+ 		return '';
+ 	},
+ 
 diff '--color=auto' -Naur a/coolwsd-systemplate-setup b/coolwsd-systemplate-setup
---- a/coolwsd-systemplate-setup	2025-07-16 14:00:40.725924709 +0200
-+++ b/coolwsd-systemplate-setup	2025-07-16 14:00:51.123294087 +0200
+--- a/coolwsd-systemplate-setup	2026-05-04 16:56:27.300592400 +0200
++++ b/coolwsd-systemplate-setup	2026-05-04 16:57:35.066318597 +0200
 @@ -130,6 +130,7 @@
  
  mkdir -p $LOCALBASE/share || exit 1
@@ -89,8 +117,8 @@ diff '--color=auto' -Naur a/coolwsd-systemplate-setup b/coolwsd-systemplate-setu
  if [ -h $LOCALBASE/share/fonts/ghostscript ]; then
      mkdir $LOCALBASE/share/ghostscript || exit 1
 diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
---- a/coolwsd.xml.in	2025-07-16 14:00:40.725991835 +0200
-+++ b/coolwsd.xml.in	2025-07-16 14:05:47.834137681 +0200
+--- a/coolwsd.xml.in	2026-05-04 16:56:27.300592400 +0200
++++ b/coolwsd.xml.in	2026-05-04 16:57:35.066318597 +0200
 @@ -144,7 +144,7 @@
           not here.
      -->
@@ -139,9 +167,10 @@ diff '--color=auto' -Naur a/coolwsd.xml.in b/coolwsd.xml.in
          <cipher_list desc="List of OpenSSL ciphers to accept" type="string" default="ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"></cipher_list>
          <hpkp desc="Enable HTTP Public key pinning" enable="false" report_only="false">
 diff '--color=auto' -Naur a/wsd/ProxyProtocol.cpp b/wsd/ProxyProtocol.cpp
---- a/wsd/ProxyProtocol.cpp	2025-07-16 14:00:40.768873037 +0200
-+++ b/wsd/ProxyProtocol.cpp	2025-07-16 14:02:25.149031452 +0200
-@@ -103,7 +103,7 @@
+--- a/wsd/ProxyProtocol.cpp	2026-05-04 16:56:27.297259113 +0200
++++ b/wsd/ProxyProtocol.cpp	2026-05-04 16:57:35.066318597 +0200
+@@ -102,7 +102,7 @@
+     }
      addSession(clientSession);
      COOLWSD::checkDiskSpaceAndWarnClients(true);
 -    COOLWSD::checkSessionLimitsAndWarnClients();
