@@ -149,6 +149,7 @@ diff '--color=auto' -Naur a/wsd/ProxyProtocol.cpp b/wsd/ProxyProtocol.cpp
  
      const std::string& sessionId = clientSession->getOrCreateProxyAccess();
      LOG_TRC("proxy: Returning sessionId " << sessionId);
+
 diff '--color=auto' -Naur a/wsd/ClientSession.cpp b/wsd/ClientSession.cpp
 --- a/wsd/ClientSession.cpp
 +++ b/wsd/ClientSession.cpp
