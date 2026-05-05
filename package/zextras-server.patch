@@ -151,8 +151,8 @@ diff '--color=auto' -Naur a/wsd/ProxyProtocol.cpp b/wsd/ProxyProtocol.cpp
      LOG_TRC("proxy: Returning sessionId " << sessionId);
 
 diff '--color=auto' -Naur a/wsd/ClientSession.cpp b/wsd/ClientSession.cpp
---- a/wsd/ClientSession.cpp
-+++ b/wsd/ClientSession.cpp
+--- a/wsd/ClientSession.cpp	2026-05-05 10:43:59.682947948 +0200
++++ b/wsd/ClientSession.cpp	2026-05-05 10:44:08.590060315 +0200
 @@ -230,12 +230,18 @@
  std::string ClientSession::createPublicURI(const std::string& subPath, const std::string& tag, bool encode)
  {
@@ -162,9 +162,9 @@ diff '--color=auto' -Naur a/wsd/ClientSession.cpp b/wsd/ClientSession.cpp
 +        if (p.first == "service_id")
 +            serviceId = p.second;
      wopiSrc.setQueryParameters(Poco::URI::QueryParameters());
- 
+
      const std::string encodedFrom = Uri::encode(wopiSrc.toString());
- 
+
      std::string meta = _serverURL.getSubURLForEndpoint(
 -        "/cool/" + subPath + "?WOPISrc=" + encodedFrom +
 +        "/cool/" + subPath + "?" +
