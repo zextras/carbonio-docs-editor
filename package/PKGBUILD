@@ -28,6 +28,7 @@ depends__apt=(
   "pending-setups"
   "python3-requests"
   "service-discover"
+  "service-discover-base"
 )
 depends__ubuntu_noble=(
   "carbonio-docs-core"
@@ -41,6 +42,7 @@ depends__ubuntu_noble=(
   "pending-setups"
   "python3-requests"
   "service-discover"
+  "service-discover-base"
 )
 makedepends__apt=(
   "autoconf"
@@ -79,6 +81,7 @@ depends__yum=(
   "pending-setups"
   "python3-requests"
   "service-discover"
+  "service-discover-base"
 )
 makedepends__yum=(
   "automake"
