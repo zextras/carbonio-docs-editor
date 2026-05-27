@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 pkgname="carbonio-docs-editor"
-pkgver="25.04.8" # renovate: datasource=github-tags depName=CollaboraOnline/online extractVersion=^cp-(?<version>.+)-\d+$
+pkgver="25.04.9" # renovate: datasource=github-tags depName=CollaboraOnline/online extractVersion=^cp-(?<version>.+)-\d+$
 _pkgrel="3"
 pkgrel="2"
 pkgdesc="A Web office suite for Carbonio"
