@@ -147,6 +147,21 @@ sha256sums=(
 _prepare() {
   cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
 
+  # Rocky/RHEL 8.10 silently rebuilt the default llvm-toolset:rhel8 module
+  # stream (May 2026) to ship llvm-21 instead of llvm-17. llvm-21 drags
+  # python3.12, which registers /usr/bin/python3 at a higher alternatives
+  # priority than platform-python 3.6. The python3-lxml / python3-polib
+  # packages bind to 3.6 only, so configure's AC_PYTHON check fails with
+  # "lxml for python3 is needed". Restore python3 -> platform-python so the
+  # configure macro finds the modules that are actually installed.
+  if [ -x /usr/libexec/platform-python ] && command -v alternatives >/dev/null 2>&1; then
+    # platform-python isn't registered as an alternative by default on Rocky
+    # 8.10; --install first, then force-select it over python3.12.
+    alternatives --install /usr/bin/python3 python3 \
+      /usr/libexec/platform-python 99999 2>/dev/null || true
+    alternatives --set python3 /usr/libexec/platform-python 2>/dev/null || true
+  fi
+
   # Add zx spice
   patch -Np1 -i "${srcdir}/zextras-server.patch"
 
