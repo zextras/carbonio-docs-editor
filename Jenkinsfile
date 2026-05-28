@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 library(
-    identifier: 'jenkins-lib-common@v2.8.7',
+    identifier: 'jenkins-lib-common@v2.8.8',
     retriever: modernSCM([
         $class: 'GitSCMSource',
         credentialsId: 'jenkins-integration-with-github-account',
@@ -22,6 +22,7 @@ pipeline {
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '5'))
+        disableConcurrentBuilds()
         skipDefaultCheckout()
         timeout(time: 1, unit: 'HOURS')
     }
@@ -31,9 +32,7 @@ pipeline {
         stage('Setup') {
             steps {
                 checkout scm
-                script {
-                    gitMetadata()
-                }
+                gitMetadata()
             }
         }
 
