@@ -41,6 +41,7 @@ pipeline {
                 dockerStage([
                     dockerfile: 'docker/docs-editor-sidecar/Dockerfile',
                     imageName: 'registry.dev.zextras.com/dev/carbonio-docs-editor-sidecar',
+                    platforms: ['linux/amd64', 'linux/arm64'] as Set,
                     ocLabels: [
                         title: 'Carbonio Docs Editor Sidecar',
                     ]
