@@ -17,8 +17,12 @@ KillMode=control-group
 Restart=always
 LimitNOFILE=infinity:infinity
 
-ProtectSystem=strict
-ReadWritePaths=/opt/zextras/docs /var/log
+#ProtectSystem=strict
+#ReadWritePaths=/opt/zextras/docs /var/log
+ProtectSystem=yes
+ReadOnlyPaths=/usr
+ReadOnlyPaths=/boot
+ReadOnlyPaths=/efi
 
 ProtectHome=yes
 PrivateTmp=yes
