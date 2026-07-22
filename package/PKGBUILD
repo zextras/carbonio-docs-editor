@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 pkgname="carbonio-docs-editor"
-pkgver="25.04.8" # renovate: datasource=github-tags depName=CollaboraOnline/online extractVersion=^cp-(?<version>.+)-\d+$
+pkgver="26.04.2" # renovate: datasource=github-tags depName=CollaboraOnline/online.mirror extractVersion=^cp-(?<version>.+)-\d+$
 _pkgrel="3"
-pkgrel="6"
+pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
 url="https://zextras.com"
@@ -110,7 +110,9 @@ makedepends__yum=(
   "rsync"
 )
 source=(
-  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-${_pkgrel}.tar.gz"
+  "https://github.com/CollaboraOnline/online.mirror/archive/cp-${pkgver}-${_pkgrel}.tar.gz"
+  # NOTE: carbonio-docs-branding has no 26.04.2 tag yet (only "25.04.8" exists);
+  # pinned to the latest available tag until a matching release is cut.
   "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=25.04.8"
   "521-${pkgname}.sh"
   "zextras-server.patch"
@@ -127,11 +129,11 @@ source=(
   "jammy-chrono-hours.patch"
 )
 sha256sums=(
-  '37e3557301266e4efa8467a0ba042b8169d5ff7363156813f3977ebf02422871'
+  'SKIP'
   'SKIP'
   'de92dd50a764f5cdeec3def565bbf565881ccd6bd07b80996c86dae741ff4c06'
   '0c379f369d7ae573c969f131a2d0d925cfa68bf31b858e2b4dfeb5d23940315a'
-  '97ed78ebaf17ddc0d503e438f51aecdba715613e7ee11c561f9e260777a98330'
+  'f9c7f5a088e30b4381adbd38f4f4130f0c37fb9211049c863be9bc35a13ef98c'
   '0e7116dbcf6e9008f08ce1d29f459005a0a19a00ac6ec1d79fbefd7c26bcc137'
   '7f56f426a784c7868d8543cc63c05669371d7ccd8ccab3a7df95d0a27e126c78'
   '56bd6b4b15a6db2a539c630be4206f2c0cc4c7a1f531c47ca7d815d7bfcfba1c'
@@ -145,7 +147,7 @@ sha256sums=(
 )
 
 _prepare() {
-  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
+  cd "${srcdir}/online.mirror-cp-${pkgver}-${_pkgrel}"
 
   # Rocky/RHEL 8.10 silently rebuilt the default llvm-toolset:rhel8 module
   # stream (May 2026) to ship llvm-21 instead of llvm-17. llvm-21 drags
@@ -189,7 +191,7 @@ _prepare() {
 }
 
 prepare__ubuntu_jammy() {
-  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
+  cd "${srcdir}/online.mirror-cp-${pkgver}-${_pkgrel}"
 
   # Jammy's clang-14 lacks C++20 chrono formatters, so we need an
   # explicit operator<< for std::chrono::hours.
@@ -203,7 +205,7 @@ prepare() {
 }
 
 build() {
-  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
+  cd "${srcdir}/online.mirror-cp-${pkgver}-${_pkgrel}"
 
   export LDFLAGS="-Wl,-rpath,/opt/zextras/common/lib64 \
     -Wl,-rpath,/opt/zextras/common/lib \
@@ -245,7 +247,7 @@ build() {
 }
 
 _package_common() {
-  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
+  cd "${srcdir}/online.mirror-cp-${pkgver}-${_pkgrel}"
 
   make DESTDIR="${pkgdir}" install
 
