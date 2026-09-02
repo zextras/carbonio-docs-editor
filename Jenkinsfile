@@ -36,6 +36,12 @@ pipeline {
             }
         }
 
+        stage('Skip CI') {
+            steps {
+                script { semanticRelease.guard() }
+            }
+        }
+
         stage('Publish docker image') {
             steps {
                 dockerStage([
