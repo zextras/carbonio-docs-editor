@@ -90,7 +90,7 @@ systemctl restart carbonio-docs-editor.service
 systemctl restart carbonio-docs-editor-sidecar.service
 
 # remove tokens leaked by previous setup runs (needs the bootstrap token)
-service-discover service-token prune-legacy --service carbonio-docs-editor --policy "${POLICY_NAME}"
+service-discover service-token prune-legacy --service carbonio-docs-editor --legacy-service carobonio-docs-editor --policy "${POLICY_NAME}"
 
 # Limit token visibility as much as possible
 export -n CONSUL_HTTP_TOKEN
