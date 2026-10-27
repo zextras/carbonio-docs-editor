@@ -61,24 +61,18 @@ consul config write /etc/carbonio/docs-editor/service-discover/service-protocol.
 # Allow other services to contact this service
 consul config write /etc/carbonio/docs-editor/service-discover/intentions.json
 
-if [[ ! -f "/etc/carbonio/docs-editor/service-discover/token" ]]; then
-    # Create the token
-    consul acl token create -format json -policy-name "${POLICY_NAME}" -description "Token for
-    carobonio-docs-editor/$(hostname -A)" |
-      jq -r '.SecretID' > /etc/carbonio/docs-editor/service-discover/token;
-    chown carbonio-docs-editor:carbonio-docs-editor /etc/carbonio/docs-editor/service-discover/token
-    chmod 0600 /etc/carbonio/docs-editor/service-discover/token
+service-discover service-token ensure --service carbonio-docs-editor --policy "${POLICY_NAME}" \
+  --token-file /etc/carbonio/docs-editor/service-discover/token --owner carbonio-docs-editor
 
-    # To pass the token to consul-template we need to inject it to a env. variable
-    # since it doesn't accept a file as an argument
-    mkdir -p /etc/systemd/system/carbonio-docs-editor.service.d/
-    cat >/etc/systemd/system/carbonio-docs-editor.service.d/override.conf <<EOF
+# To pass the token to consul-template we need to inject it to a env. variable
+# since it doesn't accept a file as an argument
+mkdir -p /etc/systemd/system/carbonio-docs-editor.service.d/
+cat >/etc/systemd/system/carbonio-docs-editor.service.d/override.conf <<EOF
 [Service]
 Environment="CONSUL_HTTP_TOKEN=$(cat /etc/carbonio/docs-editor/service-discover/token)"
 EOF
-    chmod 0600 /etc/systemd/system/carbonio-docs-editor.service.d/override.conf
-    systemctl daemon-reload
-fi
+chmod 0600 /etc/systemd/system/carbonio-docs-editor.service.d/override.conf
+systemctl daemon-reload
 
 # These three commands MUST be executed in this order:
 # 1. reload consul in order to register the service via carbonio-docs-editor.hcl
@@ -91,8 +85,12 @@ consul config write /etc/carbonio/docs-editor/service-discover/service-resolver.
 consul config write /etc/carbonio/docs-editor/service-discover/service-router.json
 
 
-# Limit token visibility as much as possible
-export -n CONSUL_HTTP_TOKEN
 
 systemctl restart carbonio-docs-editor.service
 systemctl restart carbonio-docs-editor-sidecar.service
+
+# remove tokens leaked by previous setup runs (needs the bootstrap token)
+service-discover service-token prune-legacy --service carbonio-docs-editor --policy "${POLICY_NAME}"
+
+# Limit token visibility as much as possible
+export -n CONSUL_HTTP_TOKEN
