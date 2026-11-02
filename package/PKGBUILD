@@ -108,7 +108,7 @@ makedepends__yum=(
 )
 source=(
   "https://github.com/CollaboraOnline/online.mirror/archive/cp-${pkgver}-${_pkgrel}.tar.gz"
-  "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=25.04.8"
+  "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=26.04.2"
   "521-${pkgname}.sh"
   "zextras-server.patch"
   "wopi-fixes.patch"
