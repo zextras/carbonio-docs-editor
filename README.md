@@ -64,8 +64,8 @@ make clean
 
 This project requires packages from two sibling projects at build time:
 
-- **carbonio-thirds** — provides `carbonio-openssl` and `carbonio-poco`
-- **carbonio-docs-core** — provides `carbonio-docs-core`
+- **carbonio-thirds** — provides `carbonio-openssl`
+- **carbonio-docs-core** — provides `carbonio-docs-core`, including the COKit headers and the engine build-tree subset under `/opt/zextras/docs/engine` (static POCO, OpenSSL, expat, libpng, zstd) that coolwsd links against
 
 Zextras developers with Artifactory access can build without providing these locally. Community contributors should build both projects first, then pass their artifact directories via `THIRDS_DIR` and `CORE_DIR`.
 
