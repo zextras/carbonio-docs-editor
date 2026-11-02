@@ -3,6 +3,16 @@
     "description": "This is the Carbonio Docs Editor project",
     "buildDir": "/tmp/",
     "output": "artifacts",
+    "repos": [
+        {
+            "name": "llvm-18",
+            "url": "https://apt.llvm.org/jammy",
+            "suite": "llvm-toolchain-jammy-18",
+            "components": ["main"],
+            "keyURL": "https://apt.llvm.org/llvm-snapshot.gpg.key",
+            "distros": ["ubuntu-jammy"]
+        }
+    ],
     "skipDeps": ["pending-setups", "service-discover", "service-discover-base"],
     "projects": [
         {

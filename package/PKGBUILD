@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 pkgname="carbonio-docs-editor"
-pkgver="25.04.8" # renovate: datasource=github-tags depName=CollaboraOnline/online extractVersion=^cp-(?<version>.+)-\d+$
+pkgver="26.04.2" # renovate: datasource=github-tags depName=CollaboraOnline/online.mirror extractVersion=^cp-(?<version>.+)-\d+$
 _pkgrel="3"
-pkgrel="6"
+# Jammy's clang-14 lacks __builtin_source_location (std::source_location);
+# clang-18 comes from apt.llvm.org there (yap.json), natively on noble.
+_clang_apt_version="clang-18"
+pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
 url="https://zextras.com"
@@ -19,7 +22,6 @@ backup=(
 depends__apt=(
   "carbonio-docs-core"
   "carbonio-openssl"
-  "carbonio-poco"
   "cpio"
   "fontconfig"
   "libcap2-bin"
@@ -33,7 +35,6 @@ depends__apt=(
 depends__ubuntu_noble=(
   "carbonio-docs-core"
   "carbonio-openssl"
-  "carbonio-poco"
   "cpio"
   "fontconfig"
   "libcap2-bin"
@@ -48,7 +49,7 @@ makedepends__apt=(
   "autoconf"
   "automake"
   "bison"
-  "clang"
+  "${_clang_apt_version}"
   "cpio"
   "dpkg-dev"
   "git"
@@ -73,7 +74,6 @@ makedepends__apt=(
 depends__yum=(
   "carbonio-docs-core"
   "carbonio-openssl"
-  "carbonio-poco"
   "cpio"
   "fontconfig"
   "libcap"
@@ -110,11 +110,11 @@ makedepends__yum=(
   "rsync"
 )
 source=(
-  "https://github.com/CollaboraOnline/online/archive/cp-${pkgver}-${_pkgrel}.tar.gz"
-  "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=25.04.8"
+  "https://github.com/CollaboraOnline/online.mirror/archive/cp-${pkgver}-${_pkgrel}.tar.gz"
+  "branding::git+https://github.com/zextras/carbonio-docs-branding.git#tag=26.04.2"
   "521-${pkgname}.sh"
   "zextras-server.patch"
-  "${pkgver}.patch"
+  "wopi-fixes.patch"
   "${pkgname}"
   "${pkgname}-template.hcl"
   "${pkgname}.service"
@@ -127,11 +127,11 @@ source=(
   "jammy-chrono-hours.patch"
 )
 sha256sums=(
-  '37e3557301266e4efa8467a0ba042b8169d5ff7363156813f3977ebf02422871'
+  'f51717b61714f27ad4d7c05695d7740b2ecce76581626934c447bb7189ff2091'
   'SKIP'
   'de92dd50a764f5cdeec3def565bbf565881ccd6bd07b80996c86dae741ff4c06'
-  '0c379f369d7ae573c969f131a2d0d925cfa68bf31b858e2b4dfeb5d23940315a'
-  '97ed78ebaf17ddc0d503e438f51aecdba715613e7ee11c561f9e260777a98330'
+  '02e9acbaf71e533e7051914da2ccd117743d5bd006e70a82ff6b0b5e73d09087'
+  '6deecdd597f07d98f2ea44ba5420d4284f9030f848e9591a25e9b37ea7e3b630'
   '0e7116dbcf6e9008f08ce1d29f459005a0a19a00ac6ec1d79fbefd7c26bcc137'
   '7f56f426a784c7868d8543cc63c05669371d7ccd8ccab3a7df95d0a27e126c78'
   '56bd6b4b15a6db2a539c630be4206f2c0cc4c7a1f531c47ca7d815d7bfcfba1c'
@@ -141,11 +141,11 @@ sha256sums=(
   'cce9a36e4e173901f54fe399f120da749054b98a377bcbd7f34b7b50457385c1'
   '5bad5690faa7d49fa2aabedae8e04a2492e9376759ab0643c797276d33d9197a'
   'd29079924293caa36c0415e95ebe84a529bb04ce34b26f7899669b45fc68a2f1'
-  '9d88c203c2aec437801d02190defbba8a33126a3097ca937523ade9bca1c0557'
+  '0bbc29a6a3980586fe4076c63f7e4ea4d9b4c54c8e46793273121ab3ff36167f'
 )
 
 _prepare() {
-  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
+  cd "${srcdir}/online.mirror-cp-${pkgver}-${_pkgrel}"
 
   # Rocky/RHEL 8.10 silently rebuilt the default llvm-toolset:rhel8 module
   # stream (May 2026) to ship llvm-21 instead of llvm-17. llvm-21 drags
@@ -166,14 +166,11 @@ _prepare() {
   patch -Np1 -i "${srcdir}/zextras-server.patch"
 
   # Backend patch (no longer assumes base url is without get parameters and removed broken last modification https://github.com/CollaboraOnline/online/issues/11050)
-  patch -Np1 -i "${srcdir}/${pkgver}.patch"
+  patch -Np1 -i "${srcdir}/wopi-fixes.patch"
 
   # Rebrand of static strings
   sed -i 's/Collabora Online Development Edition/Carbonio Docs/g' \
     $(grep -iIr "Collabora Online Development Edition" . | cut -d":" -f1)
-
-  # Disable unit-tests
-  sed -i "s/test cypress_test//" Makefile.am
 
   # Force /opt/zextras/docs/conf path and inject some sane defaults
   sed -Ei "s#COOLWSD_CONFIGDIR=.*#COOLWSD_CONFIGDIR=/opt/zextras/docs/conf#" configure.ac
@@ -189,7 +186,7 @@ _prepare() {
 }
 
 prepare__ubuntu_jammy() {
-  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
+  cd "${srcdir}/online.mirror-cp-${pkgver}-${_pkgrel}"
 
   # Jammy's clang-14 lacks C++20 chrono formatters, so we need an
   # explicit operator<< for std::chrono::hours.
@@ -203,19 +200,24 @@ prepare() {
 }
 
 build() {
-  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
+  cd "${srcdir}/online.mirror-cp-${pkgver}-${_pkgrel}"
 
-  export LDFLAGS="-Wl,-rpath,/opt/zextras/common/lib64 \
-    -Wl,-rpath,/opt/zextras/common/lib \
-    -L/opt/zextras/common/lib64 \
-    -L/opt/zextras/common/lib \
-    -L/usr/lib/x86_64-linux-gnu \
-    -L/usr/lib"
-  export OPENSSL_CFLAGS="-I/opt/zextras/common/include"
-  export OPENSSL_LIBS="-L/opt/zextras/common/lib"
+  # POCO, OpenSSL, expat, libpng and zstd are linked statically from the
+  # engine build-tree subset shipped by carbonio-docs-core
+  # (--with-lo-builddir below). OPENSSL_* bypasses the pkg-config probe so
+  # the system/carbonio OpenSSL is never mixed in.
+  # No `local`: yap runs build() bodies as top-level scripts.
+  engine_ut=/opt/zextras/docs/engine/workdir/UnpackedTarball
+  export OPENSSL_CFLAGS="-isystem ${engine_ut}/openssl/include"
+  export OPENSSL_LIBS="-L${engine_ut}/openssl -lssl -lcrypto"
 
-  export CC="clang -pthread"
-  export CXX="clang++ -pthread"
+  if command -v "${_clang_apt_version}" >/dev/null 2>&1; then
+    export CC="${_clang_apt_version} -pthread"
+    export CXX="${_clang_apt_version/clang/clang++} -pthread"
+  else
+    export CC="clang -pthread"
+    export CXX="clang++ -pthread"
+  fi
 
   ./autogen.sh
   ./configure \
@@ -234,18 +236,17 @@ build() {
     --with-dictionaries="" \
     --with-lo-path=/opt/zextras/docs/core \
     --with-logfile=/opt/zextras/docs/log/docs-editor.log \
+    --with-lo-builddir=/opt/zextras/docs/engine \
     --with-lokit-path=/opt/zextras/common/include \
     --with-max-connections=10000 \
     --with-max-documents=10000 \
-    --with-poco-includes=/opt/zextras/common/include \
-    --with-poco-libs="/opt/zextras/common/lib64 -L/opt/zextras/common/lib" \
     --with-user-id="${pkgname}"
 
   make build-nocheck -j8
 }
 
 _package_common() {
-  cd "${srcdir}/online-cp-${pkgver}-${_pkgrel}"
+  cd "${srcdir}/online.mirror-cp-${pkgver}-${_pkgrel}"
 
   make DESTDIR="${pkgdir}" install
 
