@@ -5,6 +5,9 @@
 pkgname="carbonio-docs-editor"
 pkgver="26.04.2" # renovate: datasource=github-tags depName=CollaboraOnline/online.mirror extractVersion=^cp-(?<version>.+)-\d+$
 _pkgrel="3"
+# Jammy's clang-14 lacks __builtin_source_location (std::source_location);
+# clang-18 comes from apt.llvm.org there (yap.json), natively on noble.
+_clang_apt_version="clang-18"
 pkgrel="1"
 pkgdesc="A Web office suite for Carbonio"
 maintainer="Zextras <packages@zextras.com>"
@@ -46,7 +49,7 @@ makedepends__apt=(
   "autoconf"
   "automake"
   "bison"
-  "clang"
+  "${_clang_apt_version}"
   "cpio"
   "dpkg-dev"
   "git"
@@ -208,8 +211,13 @@ build() {
   export OPENSSL_CFLAGS="-isystem ${engine_ut}/openssl/include"
   export OPENSSL_LIBS="-L${engine_ut}/openssl -lssl -lcrypto"
 
-  export CC="clang -pthread"
-  export CXX="clang++ -pthread"
+  if command -v "${_clang_apt_version}" >/dev/null 2>&1; then
+    export CC="${_clang_apt_version} -pthread"
+    export CXX="${_clang_apt_version/clang/clang++} -pthread"
+  else
+    export CC="clang -pthread"
+    export CXX="clang++ -pthread"
+  fi
 
   ./autogen.sh
   ./configure \
