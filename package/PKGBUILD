@@ -203,7 +203,8 @@ build() {
   # engine build-tree subset shipped by carbonio-docs-core
   # (--with-lo-builddir below). OPENSSL_* bypasses the pkg-config probe so
   # the system/carbonio OpenSSL is never mixed in.
-  local engine_ut=/opt/zextras/docs/engine/workdir/UnpackedTarball
+  # No `local`: yap runs build() bodies as top-level scripts.
+  engine_ut=/opt/zextras/docs/engine/workdir/UnpackedTarball
   export OPENSSL_CFLAGS="-isystem ${engine_ut}/openssl/include"
   export OPENSSL_LIBS="-L${engine_ut}/openssl -lssl -lcrypto"
 
