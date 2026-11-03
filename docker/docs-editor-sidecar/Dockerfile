@@ -1,4 +1,4 @@
-FROM registry.dev.zextras.com/dev/carbonio-sidecar:devel
+FROM registry.dev.zextras.com/dev/carbonio-sidecar:main
 
 # Install runtime dependencies needed by the setup script
 RUN apt-get update \

@@ -79,7 +79,7 @@ NODEREPO
     yum install -y nodejs
 fi
 
-# Install third-party dependencies (carbonio-thirds: openssl, poco, etc.)
+# Install third-party dependencies (carbonio-thirds: openssl, etc.)
 install_packages "$THIRDS_DIR" "third-party dependencies (carbonio-thirds)"
 
 # Install core dependencies (carbonio-docs-core)

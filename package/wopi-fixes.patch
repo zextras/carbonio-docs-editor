@@ -1,39 +1,40 @@
-diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/control/Control.Menubar.ts
---- original/browser/src/control/Control.Menubar.ts	2025-07-02 07:23:17.000000000 +0200
-+++ modified/browser/src/control/Control.Menubar.ts	2025-07-30 15:09:27.134031686 +0200
-@@ -420,7 +420,6 @@
- 				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
+diff --git a/browser/src/control/Control.Menubar.ts b/browser/src/control/Control.Menubar.ts
+index 37cf8d5..716af4b 100644
+--- a/browser/src/control/Control.Menubar.ts
++++ b/browser/src/control/Control.Menubar.ts
+@@ -448,7 +448,6 @@ class Menubar extends window.L.Control {
+ 				{type: 'separator'},
  				{name: _('About'), id: 'about', type: 'action'}]
  			},
 -			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
  		],
  
  		presentation: [
-@@ -603,7 +602,6 @@
- 				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
+@@ -646,7 +645,6 @@ class Menubar extends window.L.Control {
+ 				{type: 'separator'},
  				{name: _('About'), id: 'about', type: 'action'}]
  			},
 -			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
  		],
  
  		drawing: [
-@@ -742,7 +740,6 @@
- 				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
+@@ -801,7 +799,6 @@ class Menubar extends window.L.Control {
+ 				{type: 'separator'},
  				{name: _('About'), id: 'about', type: 'action'}]
  			},
 -			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
  		],
  
  		spreadsheet: [
-@@ -1040,7 +1037,6 @@
- 				{name: _('Server audit'), id: 'serveraudit', type: 'action', mobileapp: false},
+@@ -1109,7 +1106,6 @@ class Menubar extends window.L.Control {
+ 				{type: 'separator'},
  				{name: _('About'), id: 'about', type: 'action'}]
  			},
 -			{name: _('Last modification'), id: 'last-mod', type: 'action', tablet: false}
  		],
  
  		mobiletext:  [
-@@ -1470,7 +1466,6 @@
+@@ -1552,7 +1548,6 @@ class Menubar extends window.L.Control {
  	private _hiddenItems: string[] = [];
  	private _menubarCont: HTMLElement | null = null;
  	private _isFileODF: boolean = true;
@@ -41,7 +42,7 @@ diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/
  	private _map: any;
  
  	/**
-@@ -1508,8 +1503,6 @@
+@@ -1590,8 +1585,6 @@ class Menubar extends window.L.Control {
  		map.on('addmenu', this._addMenu, this);
  		map.on('languagesupdated', this._onInitLanguagesMenu, this);
  		map.on('updatetoolbarcommandvalues', this._onStyleMenu, this);
@@ -50,7 +51,7 @@ diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/
  	}
  
  	/**
-@@ -1522,8 +1515,6 @@
+@@ -1604,8 +1597,6 @@ class Menubar extends window.L.Control {
  		this._map.off('addmenu', this._addMenu, this);
  		this._map.off('languagesupdated', this._onInitLanguagesMenu, this);
  		this._map.off('updatetoolbarcommandvalues', this._onStyleMenu, this);
@@ -59,7 +60,7 @@ diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/
  		app.events.off('updatepermission', this._onRefresh);
  
  		this._menubarCont?.remove();
-@@ -2945,45 +2936,4 @@
+@@ -3276,45 +3267,4 @@ class Menubar extends window.L.Control {
  		}
  		return null;
  	}
@@ -105,10 +106,11 @@ diff -Naur original/browser/src/control/Control.Menubar.ts modified/browser/src/
 -		}
 -	}
  }
-diff -Naur original/browser/src/map/Map.js modified/browser/src/map/Map.js
---- original/browser/src/map/Map.js	2025-07-02 07:23:17.000000000 +0200
-+++ modified/browser/src/map/Map.js	2025-07-30 15:11:11.667928504 +0200
-@@ -136,10 +136,6 @@
+diff --git a/browser/src/map/Map.js b/browser/src/map/Map.js
+index a3a265a..46eaa7b 100644
+--- a/browser/src/map/Map.js
++++ b/browser/src/map/Map.js
+@@ -135,10 +135,6 @@ window.L.Map = window.L.Evented.extend({
  
  		this._debug = new app.DebugManager(this);
  
@@ -119,27 +121,27 @@ diff -Naur original/browser/src/map/Map.js modified/browser/src/map/Map.js
  		// When all these conditions are met, fire statusindicator:initializationcomplete
  		this.initConditions = {
  			'doclayerinit': false,
-@@ -231,9 +227,6 @@
+@@ -230,9 +226,6 @@ window.L.Map = window.L.Evented.extend({
  		// after we receive status for the first time.
  		this._docLoadedOnce = false;
  
 -		//Last modified time of document saved state
 -		this._lastModDateValue = '';
 -
- 		this.on('commandstatechanged', function(e) {
- 			if (e.commandName === '.uno:ModifiedStatus') {
- 				this._everModified = this._everModified || (e.state === 'true');
-@@ -291,9 +284,6 @@
+ 		// Last part for which Doc_PartChanged was fired
+ 		this._lastPart = -1;
+ 		this._lastPartCount = -1;
+@@ -335,9 +328,6 @@ window.L.Map = window.L.Evented.extend({
  					commentSection.clearList();
  			}
  
--			if (!window.mode.isMobile())
+-			if (!window.mode.isSmallScreenDevice())
 -				this.initializeModificationIndicator();
 -
  			// We have loaded.
  			if (!this._docLoadedOnce) {
  				this._docLoadedOnce = this._docLoaded;
-@@ -460,64 +450,6 @@
+@@ -508,64 +498,6 @@ window.L.Map = window.L.Evented.extend({
  		}
  	},
  
@@ -204,10 +206,11 @@ diff -Naur original/browser/src/map/Map.js modified/browser/src/map/Map.js
  	showBusy: function(label, bar) {
  		if (window.ThisIsTheAndroidApp)
  			return;
-diff -Naur original/common/Authorization.cpp modified/common/Authorization.cpp
---- original/common/Authorization.cpp	2025-07-02 07:23:17.000000000 +0200
-+++ modified/common/Authorization.cpp	2025-07-29 11:18:57.729391862 +0200
-@@ -24,21 +24,40 @@
+diff --git a/common/Authorization.cpp b/common/Authorization.cpp
+index 57c2225..4b1f24c 100644
+--- a/common/Authorization.cpp
++++ b/common/Authorization.cpp
+@@ -32,21 +32,40 @@ void Authorization::authorizeURI(Poco::URI& uri) const
  {
      if (_type == Authorization::Type::Token)
      {
@@ -248,10 +251,11 @@ diff -Naur original/common/Authorization.cpp modified/common/Authorization.cpp
      }
  }
  
-diff -Naur original/wsd/RequestDetails.cpp modified/wsd/RequestDetails.cpp
---- original/wsd/RequestDetails.cpp	2025-07-02 07:23:17.000000000 +0200
-+++ modified/wsd/RequestDetails.cpp	2025-07-29 15:24:26.330365794 +0200
-@@ -130,7 +130,9 @@
+diff --git a/wsd/RequestDetails.cpp b/wsd/RequestDetails.cpp
+index 74bde4f..ad6c295 100644
+--- a/wsd/RequestDetails.cpp
++++ b/wsd/RequestDetails.cpp
+@@ -138,7 +138,9 @@ RequestDetails::RequestDetails(const std::string& wopiSrc, const std::vector<std
      std::string wopiSrcWithOptions = decodedWopiSrc;
      if (!options.empty())
      {
@@ -262,7 +266,7 @@ diff -Naur original/wsd/RequestDetails.cpp modified/wsd/RequestDetails.cpp
      }
  
      for (const std::string& option : options)
-@@ -303,6 +305,10 @@
+@@ -345,6 +347,10 @@ Poco::URI RequestDetails::sanitizeURI(const std::string& uri)
      uriPublic.setQueryParameters(queryParams);
  
      LOG_DBG("Sanitized URI [" << uri << "] to [" << uriPublic.toString() << ']');
@@ -273,10 +277,11 @@ diff -Naur original/wsd/RequestDetails.cpp modified/wsd/RequestDetails.cpp
      return uriPublic;
  }
  
-diff -Naur original/wsd/wopi/CheckFileInfo.cpp modified/wsd/wopi/CheckFileInfo.cpp
---- original/wsd/wopi/CheckFileInfo.cpp	2025-07-02 07:23:17.000000000 +0200
-+++ modified/wsd/wopi/CheckFileInfo.cpp	2025-07-29 10:37:32.054958036 +0200
-@@ -33,6 +33,10 @@
+diff --git a/wsd/wopi/CheckFileInfo.cpp b/wsd/wopi/CheckFileInfo.cpp
+index 9bdeeba..473a15b 100644
+--- a/wsd/wopi/CheckFileInfo.cpp
++++ b/wsd/wopi/CheckFileInfo.cpp
+@@ -33,6 +33,10 @@ bool CheckFileInfo::checkFileInfo(int redirectLimit)
      Authorization auth = Authorization::create(_url);
      const http::Request httpRequest = StorageConnectionManager::createHttpRequest(_url, auth);
  
@@ -287,10 +292,11 @@ diff -Naur original/wsd/wopi/CheckFileInfo.cpp modified/wsd/wopi/CheckFileInfo.c
      const auto startTime = std::chrono::steady_clock::now();
  
      LOG_TRC("WOPI::CheckFileInfo request header for URI [" << uriAnonym << "]:\n"
-diff -Naur original/wsd/wopi/StorageConnectionManager.cpp modified/wsd/wopi/StorageConnectionManager.cpp
---- original/wsd/wopi/StorageConnectionManager.cpp	2025-07-02 07:23:17.000000000 +0200
-+++ modified/wsd/wopi/StorageConnectionManager.cpp	2025-07-29 10:40:21.368115361 +0200
-@@ -110,6 +110,8 @@
+diff --git a/wsd/wopi/StorageConnectionManager.cpp b/wsd/wopi/StorageConnectionManager.cpp
+index b240b75..eb8baf4 100644
+--- a/wsd/wopi/StorageConnectionManager.cpp
++++ b/wsd/wopi/StorageConnectionManager.cpp
+@@ -107,6 +107,8 @@ void initHttpRequest(Poco::Net::HTTPRequest& request, const Poco::URI& uri,
          addWopiProof(request, uri, it->second);
  
      // Helps wrt. debugging cluster cases from the logs
@@ -299,7 +305,7 @@ diff -Naur original/wsd/wopi/StorageConnectionManager.cpp modified/wsd/wopi/Stor
      request.set("X-COOL-WOPI-ServerId", Util::getProcessIdentifier());
  }
  
-@@ -130,6 +132,10 @@
+@@ -127,6 +129,10 @@ http::Request StorageConnectionManager::createHttpRequest(const Poco::URI& uri,
          httpRequest.set(pair.first, pair.second);
      }
  
