@@ -21,12 +21,9 @@ backup=(
 )
 depends__apt=(
   "carbonio-docs-core"
-  "carbonio-openssl"
   "cpio"
   "fontconfig"
   "libcap2-bin"
-  "libpng16-16"
-  "libzstd1"
   "pending-setups"
   "python3-requests"
   "service-discover"
@@ -34,12 +31,9 @@ depends__apt=(
 )
 depends__ubuntu_noble=(
   "carbonio-docs-core"
-  "carbonio-openssl"
   "cpio"
   "fontconfig"
   "libcap2-bin"
-  "libpng16-16t64"
-  "libzstd1"
   "pending-setups"
   "python3-requests"
   "service-discover"
@@ -73,7 +67,6 @@ makedepends__apt=(
 )
 depends__yum=(
   "carbonio-docs-core"
-  "carbonio-openssl"
   "cpio"
   "fontconfig"
   "libcap"
