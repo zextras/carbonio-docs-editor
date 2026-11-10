@@ -1,5 +1,7 @@
 FROM registry.dev.zextras.com/dev/carbonio-sidecar:main
 
+RUN useradd -r -U carbonio-docs-editor
+
 # Install runtime dependencies needed by the setup script
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
