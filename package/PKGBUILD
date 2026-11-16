@@ -113,6 +113,7 @@ source=(
   "${pkgname}.service"
   "${pkgname}-sidecar.service"
   "${pkgname}-sidecar-legacy.service"
+  "${pkgname}-sidecar.conf"
   "intentions.json"
   "policies.json"
   "service-protocol.json"
@@ -128,8 +129,9 @@ sha256sums=(
   '47c0ae2d3e22304fa4e5263402a859530ae8225b1a9c7fb42f9c8ea6af6c3e4f'
   '7f56f426a784c7868d8543cc63c05669371d7ccd8ccab3a7df95d0a27e126c78'
   '56bd6b4b15a6db2a539c630be4206f2c0cc4c7a1f531c47ca7d815d7bfcfba1c'
-  '5e8e45fa82aa0bcea92d634176ca8eb21d3945b37904116b680f43243a41b073'
+  '7dda66f6d1f048fe5fa8bfb00e06bf4615e7a0063fbe19e640efae51ba9720f3'
   '2cfde6840104ffc62048ac115273b09e98f5fd114021e88e8e85b2a514c04590'
+  '8dba806470aa657b72a49bc5815bfdbe95cf265603e9a3e833b77ffef3f1eef3'
   '5b5d9a3f770345b2793b01903f0af65298fdd581c8c072299efa603c92872271'
   'cce9a36e4e173901f54fe399f120da749054b98a377bcbd7f34b7b50457385c1'
   '5bad5690faa7d49fa2aabedae8e04a2492e9376759ab0643c797276d33d9197a'
@@ -283,6 +285,8 @@ _package_systemd() {
   _package_common
   install -Dm644 "${srcdir}/${pkgname}-sidecar.service" \
     "${pkgdir}/lib/systemd/system/${pkgname}-sidecar.service"
+  install -Dm644 "${srcdir}/${pkgname}-sidecar.conf" \
+    "${pkgdir}/lib/systemd/system/${pkgname}.service.d/${pkgname}-sidecar.conf"
 }
 
 _package_legacy() {
