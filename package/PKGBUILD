@@ -309,6 +309,11 @@ package__ubuntu_jammy() {
 
 preinst() {
   if [ -d /run/systemd/system ]; then
+    # postinst regenerates the systemplate, so the server must be down; remember
+    # whether it was running so postinst can start it again after an upgrade
+    if systemctl is-active --quiet carbonio-docs-editor.service; then
+      touch /run/carbonio-docs-editor.restart
+    fi
     systemctl stop carbonio-docs-editor.service >/dev/null 2>&1 || :
     systemctl stop carbonio-docs-editor-sidecar.service >/dev/null 2>&1 || :
   fi
@@ -348,6 +353,10 @@ postinst__apt() {
         systemctl daemon-reload >/dev/null 2>&1 || :
         systemctl enable carbonio-docs-editor.service >/dev/null 2>&1 || :
         systemctl enable carbonio-docs-editor-sidecar.service >/dev/null 2>&1 || :
+        if [ -e /run/carbonio-docs-editor.restart ]; then
+          rm -f /run/carbonio-docs-editor.restart
+          systemctl start carbonio-docs-editor-sidecar.service carbonio-docs-editor.service >/dev/null 2>&1 || :
+        fi
       fi
 
       echo "======================================================"
@@ -389,6 +398,10 @@ postinst__yum() {
     systemctl daemon-reload >/dev/null 2>&1 || :
     systemctl enable carbonio-docs-editor.service >/dev/null 2>&1 || :
     systemctl enable carbonio-docs-editor-sidecar.service >/dev/null 2>&1 || :
+    if [ -e /run/carbonio-docs-editor.restart ]; then
+      rm -f /run/carbonio-docs-editor.restart
+      systemctl start carbonio-docs-editor-sidecar.service carbonio-docs-editor.service >/dev/null 2>&1 || :
+    fi
   fi
 
   echo "======================================================"
@@ -398,6 +411,11 @@ postinst__yum() {
 }
 
 prerm() {
+  # deb: remove/upgrade/...; rpm: 0 on erase, 1 on upgrade (runs after the new %post)
+  case "$1" in
+    remove | 0) ;;
+    *) return 0 ;;
+  esac
   if [ -d /run/systemd/system ]; then
     systemctl --no-reload disable carbonio-docs-editor.service >/dev/null 2>&1 || :
     systemctl --no-reload disable carbonio-docs-editor-sidecar.service >/dev/null 2>&1 || :
