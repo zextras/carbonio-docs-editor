@@ -27,4 +27,4 @@ ProtectControlGroups=yes
 CapabilityBoundingSet=CAP_FOWNER CAP_CHOWN CAP_MKNOD CAP_SYS_CHROOT CAP_SYS_ADMIN
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=carbonio.target multi-user.target
